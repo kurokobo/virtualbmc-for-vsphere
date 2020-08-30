@@ -15,11 +15,11 @@ import os
 import sys
 import tempfile
 
-import virtualbmc
-from virtualbmc import config as vbmc_config
-from virtualbmc import control
-from virtualbmc import log
-from virtualbmc import utils
+import vbmc4vsphere
+from vbmc4vsphere import config as vbmc_config
+from vbmc4vsphere import control
+from vbmc4vsphere import log
+from vbmc4vsphere import utils
 
 
 LOG = log.get_logger()
@@ -29,19 +29,17 @@ CONF = vbmc_config.get_config()
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(
-        prog='VirtualBMC server',
-        description='A virtual BMC server for controlling virtual instances',
+        prog="VirtualBMC server",
+        description="A virtual BMC server for controlling virtual instances",
     )
-    parser.add_argument('--version', action='version',
-                        version=virtualbmc.__version__)
-    parser.add_argument('--foreground',
-                        action='store_true',
-                        default=False,
-                        help='Do not daemonize')
+    parser.add_argument("--version", action="version", version=vbmc4vsphere.__version__)
+    parser.add_argument(
+        "--foreground", action="store_true", default=False, help="Do not daemonize"
+    )
 
     args = parser.parse_args(argv)
 
-    pid_file = CONF['default']['pid_file']
+    pid_file = CONF["default"]["pid_file"]
 
     try:
         with open(pid_file) as f:
@@ -53,7 +51,7 @@ def main(argv=sys.argv[1:]):
         pass
 
     else:
-        LOG.error('server PID #%(pid)d still running', {'pid': pid})
+        LOG.error("server PID #%(pid)d still running", {"pid": pid})
         return 1
 
     def wrap_with_pidfile(func, pid):
@@ -63,15 +61,16 @@ def main(argv=sys.argv[1:]):
             os.makedirs(dir_name, mode=0o700)
 
         try:
-            with tempfile.NamedTemporaryFile(mode='w+t', dir=dir_name,
-                                             delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w+t", dir=dir_name, delete=False
+            ) as f:
                 f.write(str(pid))
                 os.rename(f.name, pid_file)
 
             func()
 
         except Exception as e:
-            LOG.error('%(error)s', {'error': e})
+            LOG.error("%(error)s", {"error": e})
             return 1
 
         finally:
@@ -92,5 +91,5 @@ def main(argv=sys.argv[1:]):
             return wrap_with_pidfile(control.application, pid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

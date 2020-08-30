@@ -23,19 +23,22 @@ class VirtualBMCError(Exception):
         super(VirtualBMCError, self).__init__(self.message)
 
 
-class DomainAlreadyExists(VirtualBMCError):
-    message = 'Domain %(domain)s already exists'
+class VMAlreadyExists(VirtualBMCError):
+    message = "VM %(vm)s already exists"
 
 
-class DomainNotFound(VirtualBMCError):
-    message = 'No domain with matching name %(domain)s was found'
+class VMNotFound(VirtualBMCError):
+    message = "No VN with matching name %(vm)s was found"
 
 
-class LibvirtConnectionOpenError(VirtualBMCError):
-    message = ('Fail to establish a connection with libvirt URI "%(uri)s". '
-               'Error: %(error)s')
+class VIServerConnectionOpenError(VirtualBMCError):
+    message = (
+        'Fail to establish a connection with VI Server "%(vi)s". ' "Error: %(error)s"
+    )
 
 
 class DetachProcessError(VirtualBMCError):
-    message = ('Error when forking (detaching) the VirtualBMC process '
-               'from its parent and session. Error: %(error)s')
+    message = (
+        "Error when forking (detaching) the VirtualBMC process "
+        "from its parent and session. Error: %(error)s"
+    )

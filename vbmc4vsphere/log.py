@@ -13,19 +13,19 @@
 import errno
 import logging
 
-from virtualbmc import config
+from vbmc4vsphere import config
 
-__all__ = ['get_logger']
+__all__ = ["get_logger"]
 
-DEFAULT_LOG_FORMAT = ('%(asctime)s.%(msecs)03d %(process)d %(levelname)s '
-                      '%(name)s [-] %(message)s')
+DEFAULT_LOG_FORMAT = (
+    "%(asctime)s.%(msecs)03d %(process)d %(levelname)s " "%(name)s [-] %(message)s"
+)
 LOGGER = None
 
 
 class VirtualBMCLogger(logging.Logger):
-
     def __init__(self, debug=False, logfile=None):
-        logging.Logger.__init__(self, 'VirtualBMC')
+        logging.Logger.__init__(self, "VirtualBMC")
         try:
             if logfile is not None:
                 self.handler = logging.FileHandler(logfile)
@@ -49,8 +49,7 @@ class VirtualBMCLogger(logging.Logger):
 def get_logger():
     global LOGGER
     if LOGGER is None:
-        log_conf = config.get_config()['log']
-        LOGGER = VirtualBMCLogger(debug=log_conf['debug'],
-                                  logfile=log_conf['logfile'])
+        log_conf = config.get_config()["log"]
+        LOGGER = VirtualBMCLogger(debug=log_conf["debug"], logfile=log_conf["logfile"])
 
     return LOGGER

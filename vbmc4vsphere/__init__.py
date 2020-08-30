@@ -12,4 +12,4 @@
 
 import pbr.version
 
-__version__ = pbr.version.VersionInfo('virtualbmc').version_string()
+__version__ = pbr.version.VersionInfo("vbmc4vsphere").version_string()

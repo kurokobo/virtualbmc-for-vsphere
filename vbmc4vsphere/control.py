@@ -19,10 +19,10 @@ import sys
 
 import zmq
 
-from virtualbmc import config as vbmc_config
-from virtualbmc import exception
-from virtualbmc import log
-from virtualbmc.manager import VirtualBMCManager
+from vbmc4vsphere import config as vbmc_config
+from vbmc4vsphere import exception
+from vbmc4vsphere import log
+from vbmc4vsphere.manager import VirtualBMCManager
 
 CONF = vbmc_config.get_config()
 
@@ -46,7 +46,7 @@ def main_loop(vbmc_manager, handle_command):
     outcome of the command, and optionally 2-D table conveyed through the
     `header` and `rows` attributes pointing to lists of cell values.
     """
-    server_port = CONF['default']['server_port']
+    server_port = CONF["default"]["server_port"]
 
     context = socket = None
 
@@ -59,7 +59,7 @@ def main_loop(vbmc_manager, handle_command):
         poller = zmq.Poller()
         poller.register(socket, zmq.POLLIN)
 
-        LOG.info('Started vBMC server on port %s', server_port)
+        LOG.info("Started vBMC server on port %s", server_port)
 
         while True:
             socks = dict(poller.poll(timeout=TIMER_PERIOD))
@@ -70,43 +70,38 @@ def main_loop(vbmc_manager, handle_command):
                 continue
 
             try:
-                data_in = json.loads(message.decode('utf-8'))
+                data_in = json.loads(message.decode("utf-8"))
 
             except ValueError as ex:
                 LOG.warning(
-                    'Control server request deserialization error: '
-                    '%(error)s', {'error': ex}
+                    "Control server request deserialization error: " "%(error)s",
+                    {"error": ex},
                 )
                 continue
 
-            LOG.debug('Command request data: %(request)s',
-                      {'request': data_in})
+            LOG.debug("Command request data: %(request)s", {"request": data_in})
 
             try:
                 data_out = handle_command(vbmc_manager, data_in)
 
             except exception.VirtualBMCError as ex:
-                msg = 'Command failed: %(error)s' % {'error': ex}
+                msg = "Command failed: %(error)s" % {"error": ex}
                 LOG.error(msg)
-                data_out = {
-                    'rc': 1,
-                    'msg': [msg]
-                }
+                data_out = {"rc": 1, "msg": [msg]}
 
-            LOG.debug('Command response data: %(response)s',
-                      {'response': data_out})
+            LOG.debug("Command response data: %(response)s", {"response": data_out})
 
             try:
                 message = json.dumps(data_out)
 
             except ValueError as ex:
                 LOG.warning(
-                    'Control server response serialization error: '
-                    '%(error)s', {'error': ex}
+                    "Control server response serialization error: " "%(error)s",
+                    {"error": ex},
                 )
                 continue
 
-            socket.send(message.encode('utf-8'))
+            socket.send(message.encode("utf-8"))
 
     finally:
         if socket:
@@ -121,78 +116,74 @@ def command_dispatcher(vbmc_manager, data_in):
     Calls vBMC manager to execute commands, implements uniform
     dictionary-based interface to the caller.
     """
-    command = data_in.pop('command')
+    command = data_in.pop("command")
 
-    LOG.debug('Running "%(cmd)s" command handler', {'cmd': command})
+    LOG.debug('Running "%(cmd)s" command handler', {"cmd": command})
 
-    if command == 'add':
+    if command == "add":
 
-        # Check if the username and password were given for SASL
-        sasl_user = data_in['libvirt_sasl_username']
-        sasl_pass = data_in['libvirt_sasl_password']
-        if any((sasl_user, sasl_pass)):
-            if not all((sasl_user, sasl_pass)):
-                error = ("A password and username are required to use "
-                         "Libvirt's SASL authentication")
-                return {'msg': [error], 'rc': 1}
+        # Check if the username and password were given for VI Server
+        vi_user = data_in["viserver_username"]
+        vi_pass = data_in["viserver_password"]
+        if any((vi_user, vi_pass)):
+            if not all((vi_user, vi_pass)):
+                error = (
+                    "A password and username are required to use "
+                    "VI Server authentication"
+                )
+                return {"msg": [error], "rc": 1}
 
         rc, msg = vbmc_manager.add(**data_in)
 
+        return {"rc": rc, "msg": [msg] if msg else []}
+
+    elif command == "delete":
+        data_out = [
+            vbmc_manager.delete(vm_name) for vm_name in set(data_in["vm_names"])
+        ]
         return {
-            'rc': rc,
-            'msg': [msg] if msg else []
+            "rc": max(rc for rc, msg in data_out),
+            "msg": [msg for rc, msg in data_out if msg],
         }
 
-    elif command == 'delete':
-        data_out = [vbmc_manager.delete(domain_name)
-                    for domain_name in set(data_in['domain_names'])]
+    elif command == "start":
+        data_out = [vbmc_manager.start(vm_name) for vm_name in set(data_in["vm_names"])]
         return {
-            'rc': max(rc for rc, msg in data_out),
-            'msg': [msg for rc, msg in data_out if msg],
+            "rc": max(rc for rc, msg in data_out),
+            "msg": [msg for rc, msg in data_out if msg],
         }
 
-    elif command == 'start':
-        data_out = [vbmc_manager.start(domain_name)
-                    for domain_name in set(data_in['domain_names'])]
+    elif command == "stop":
+        data_out = [vbmc_manager.stop(vm_name) for vm_name in set(data_in["vm_names"])]
         return {
-            'rc': max(rc for rc, msg in data_out),
-            'msg': [msg for rc, msg in data_out if msg],
+            "rc": max(rc for rc, msg in data_out),
+            "msg": [msg for rc, msg in data_out if msg],
         }
 
-    elif command == 'stop':
-        data_out = [vbmc_manager.stop(domain_name)
-                    for domain_name in set(data_in['domain_names'])]
-        return {
-            'rc': max(rc for rc, msg in data_out),
-            'msg': [msg for rc, msg in data_out if msg],
-        }
-
-    elif command == 'list':
+    elif command == "list":
         rc, tables = vbmc_manager.list()
 
-        header = ('Domain name', 'Status', 'Address', 'Port')
-        keys = ('domain_name', 'status', 'address', 'port')
+        header = ("VM name", "Status", "Address", "Port")
+        keys = ("vm_name", "status", "address", "port")
         return {
-            'rc': rc,
-            'header': header,
-            'rows': [
-                [table.get(key, '?') for key in keys] for table in tables
-            ]
+            "rc": rc,
+            "header": header,
+            "rows": [[table.get(key, "?") for key in keys] for table in tables],
         }
 
-    elif command == 'show':
-        rc, table = vbmc_manager.show(data_in['domain_name'])
+    elif command == "show":
+        rc, table = vbmc_manager.show(data_in["vm_name"])
 
         return {
-            'rc': rc,
-            'header': ('Property', 'Value'),
-            'rows': table,
+            "rc": rc,
+            "header": ("Property", "Value"),
+            "rows": table,
         }
 
     else:
         return {
-            'rc': 1,
-            'msg': ['Unknown command'],
+            "rc": 1,
+            "msg": ["Unknown command"],
         }
 
 
@@ -215,10 +206,8 @@ def application():
     try:
         main_loop(vbmc_manager, command_dispatcher)
     except KeyboardInterrupt:
-        LOG.info('Got keyboard interrupt, exiting')
+        LOG.info("Got keyboard interrupt, exiting")
         vbmc_manager.periodic(shutdown=True)
     except Exception as ex:
-        LOG.error(
-            'Control server error: %(error)s', {'error': ex}
-        )
+        LOG.error("Control server error: %(error)s", {"error": ex})
         vbmc_manager.periodic(shutdown=True)

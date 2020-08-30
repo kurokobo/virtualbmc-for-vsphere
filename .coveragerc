@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = virtualbmc
-omit = virtualbmc/tests/*
-
-[report]
-ignore_errors = True
