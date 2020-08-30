@@ -1,0 +1,14 @@
+- project:
+    templates:
+      - release-notes-jobs-python3
+      - publish-openstack-docs-pti
+      - openstack-python3-ussuri-jobs
+      - check-requirements
+    check:
+      jobs:
+        - virtualbmc-tempest-ironic-ipmi-iscsi
+        - openstack-tox-lower-constraints
+    gate:
+      jobs:
+        - virtualbmc-tempest-ironic-ipmi-iscsi
+        - openstack-tox-lower-constraints
