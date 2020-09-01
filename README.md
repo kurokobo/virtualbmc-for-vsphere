@@ -10,11 +10,18 @@ In other words, the vSphere version of [VirtualBMC](https://github.com/openstack
 ![Demo](https://user-images.githubusercontent.com/2920259/91665870-a7d78400-eb33-11ea-8d5b-33d98b3fe107.gif)
 
 
+### Disclaimer
+
+* For testing purposes only. Not for production use.
+* The vCenter Server credentials including password are stored in plain text.
+
+
 ### Installation
 
 ```bash
 pip install vbmc4vsphere
 ```
+
 
 ### Supported IPMI commands
 
@@ -127,14 +134,14 @@ pip install vbmc4vsphere
 
 Once the virtual BMC for a specific VM has been created and started you can then issue IPMI commands against the address and port of that virtual BMC to control the VM.
 
-In this example, if your VirtualBMC host has `192.168.0.100`, you can controll:
+In this example, if your VirtualBMC host has `192.168.0.100`, you can control:
 
-* `lab-vesxi01` througth `192.168.0.100:2360`
-* `lab-vesxi02` througth `192.168.0.100:2361`
+* `lab-vesxi01` througth `192.168.0.100:6230`
+* `lab-vesxi02` througth `192.168.0.100:6231`
 
 by using IPMI. For example:
 
-* To power on the virtual machine:
+* To power on the virtual machine `lab-vesxi01`:
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power on
   Chassis Power Control: Up/On
@@ -144,11 +151,95 @@ by using IPMI. For example:
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power status
   Chassis Power is on
   ```
-* To shutdown the virtual machine:
+* To shutdown `lab-vesxi01`:
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power soft
   Chassis Power Control: Soft
   ```
+* To reset the `lab-vesxi02`:
+  ```bash
+  $ ipmitool -I lanplus -H 192.168.0.100 -p 6231 -U admin -P password chassis power reset
+  Chassis Power Control: Reset
+  ```
+
+
+## Tips
+
+
+### Optional configuration file
+
+Both `vbmcd` and `vbmc` can make use of an optional configuration file, which is looked for in the following locations (in this order):
+
+* `VIRTUALBMC_CONFIG` environment variable pointing to a file
+* `$HOME/.vbmc/virtualbmc.conf` file
+* `/etc/virtualbmc/virtualbmc.conf` file
+
+If no configuration file has been found, the internal defaults apply.
+
+The configuration files are not created automatically unless you create them manually. And even if you don't create a configuration file, it won't matter in most cases.
+
+Below is a sample of `virtialbmc.conf`.
+
+```bash
+[default]
+#show_passwords = false
+config_dir = /home/vbmc/.vbmc
+#pid_file = /home/vbmc/.vbmc/master.pid
+#server_port = 50891
+#server_response_timeout = 5000
+#server_spawn_wait = 3000
+
+[log]
+# logfile = /home/vbmc/.vbmc/log/vbmc.log
+debug = true 
+
+[ipmi]
+session_timeout = 10
+```
+
+
+### Manage stored data manually
+
+Once you invoke `vbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vbmc/` by default. This path can be changed by `config_dir` in your `virtialbmc.conf` described above.
+
+Please note everything including password stored in plain text in the `config` file.
+
+```bash
+$ cat ~/.vbmc/lab-vesxi01/config
+[VirtualBMC]
+username = admin
+password = password
+address = ::
+port = 6230
+vm_name = lab-vesxi01
+viserver = 192.168.0.1
+viserver_username = vbmc@vsphere.local
+viserver_password = my-secure-password
+active = True
+```
+
+
+### Use with Nested-KVM and oVirt
+
+In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Management feature for Nested-KVM that is running in your vSphere environment.
+
+To do this, configure the Fence Agent with following parameters:
+
+* Enter the IP address of your VirtualBMC host in the `Address` field.
+* Enter the `User Name` and `Password` as configured in VirtualBMC.
+* Select `ipmilan` in the `Type` drop-down list.
+* Enter `lanplus=1,ipport=<your-port-number>` like `lanplus=1,ipport=6230` in the `Options` field.
+
+
+### Use with Nested-ESXi and vCenter Server
+
+Currently, VirtualBMC for vSphere can't be registered as the BMC for ESXi. So saddly the vSphere Distributed Power Management (DPM) can't work in the nested environment.
+
+It seems the `pyghmi.ipmi.bmc` and its session control on which VirtualBMC depends doesn't seem to be able to negotiate in IPMI with vCenter Server when the new BMC has added. 
+
+I'm not familiar with IPMI, normally, when working with `ipmitool` and the like, the first data frame is the command to get the authentication capabilities (`0x38`) as IPMI v1.5 (`Authentication Type` = `0x00`). But on a data frame from vCenter Server, the same command is sent as IPMI v2.0 (`Authentication Type` = `0x06`). The header structure differs between those versions, so I guess this is why the VirtualBMC can't start a negotiation.
+
+Even if this problem is solved, vSphere and its BMC are expected to closely work with not only power management, so its emulation may be difficult enough to get DPM to work.
 
 
 ## Reference resources
