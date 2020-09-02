@@ -20,8 +20,7 @@ import sys
 import zmq
 
 from vbmc4vsphere import config as vbmc_config
-from vbmc4vsphere import exception
-from vbmc4vsphere import log
+from vbmc4vsphere import exception, log
 from vbmc4vsphere.manager import VirtualBMCManager
 
 CONF = vbmc_config.get_config()

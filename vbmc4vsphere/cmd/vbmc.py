@@ -14,16 +14,16 @@ import json
 import logging
 import sys
 
+import zmq
 from cliff.app import App
 from cliff.command import Command
 from cliff.commandmanager import CommandManager
 from cliff.lister import Lister
-import zmq
 
 import vbmc4vsphere
 from vbmc4vsphere import config as vbmc_config
-from vbmc4vsphere.exception import VirtualBMCError
 from vbmc4vsphere import log
+from vbmc4vsphere.exception import VirtualBMCError
 
 CONF = vbmc_config.get_config()
 

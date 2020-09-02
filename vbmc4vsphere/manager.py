@@ -18,9 +18,7 @@ import shutil
 import signal
 
 from vbmc4vsphere import config as vbmc_config
-from vbmc4vsphere import exception
-from vbmc4vsphere import log
-from vbmc4vsphere import utils
+from vbmc4vsphere import exception, log, utils
 from vbmc4vsphere.vbmc import VirtualBMC
 
 LOG = log.get_logger()

@@ -11,10 +11,10 @@
 #    under the License.
 
 import os
+import ssl
 import sys
 
-import ssl
-from pyVim.connect import SmartConnect, Disconnect
+from pyVim.connect import Disconnect, SmartConnect
 from pyVmomi import vim, vmodl
 
 from vbmc4vsphere import exception

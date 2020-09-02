@@ -17,10 +17,7 @@ import tempfile
 
 import vbmc4vsphere
 from vbmc4vsphere import config as vbmc_config
-from vbmc4vsphere import control
-from vbmc4vsphere import log
-from vbmc4vsphere import utils
-
+from vbmc4vsphere import control, log, utils
 
 LOG = log.get_logger()
 
