@@ -241,6 +241,8 @@ I'm not familiar with IPMI, normally, when working with `ipmitool` and the like,
 
 Even if this problem is solved, vSphere and its BMC are expected to closely work with not only power management, so its emulation may be difficult enough to get DPM to work.
 
+**UPDATE**: I've done patching `pyghmi` to be able to handle `0x38` command sent as IPMI v2.0 and now VirtualBMC can negotiate with vCenter Server. But after negotiation vCenter Server send the command to get channel information (`NetFn` = `0x06`, `Command` = `0x42`, `Channel` = `0x0e`) that difficult to emulate responses.
+
 
 ## Reference resources
 

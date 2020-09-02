@@ -12,11 +12,15 @@
 
 # import xml.etree.ElementTree as ET
 
-import pyghmi.ipmi.bmc as bmc
+import struct
+import traceback
 
-from vbmc4vsphere import exception
-from vbmc4vsphere import log
-from vbmc4vsphere import utils
+import pyghmi.ipmi.bmc as bmc
+import pyghmi.ipmi.private.session as ipmisession
+from pyghmi.ipmi.private.serversession import IpmiServer as ipmiserver
+from pyghmi.ipmi.private.serversession import ServerSession as serversession
+
+from vbmc4vsphere import exception, log, utils
 
 LOG = log.get_logger()
 
@@ -33,6 +37,7 @@ IPMI_COMMAND_NODE_BUSY = 0xC0
 # Invalid data field in request
 IPMI_INVALID_DATA = 0xCC
 
+
 # Boot device maps
 GET_BOOT_DEVICES_MAP = {
     "network": 4,
@@ -45,6 +50,104 @@ SET_BOOT_DEVICES_MAP = {
     "hd": "hd",
     "optical": "cdrom",
 }
+
+
+# Functions for patch pyghmi to handle sessionless IPMIv2 data
+# Based on pyghmi 1.5.16
+# Apache License 2.0
+# https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
+def sessionless_data(self, data, sockaddr):
+    """Examines unsolocited packet and decides appropriate action.
+
+    For a listening IpmiServer, a packet without an active session
+    comes here for examination.  If it is something that is utterly
+    sessionless (e.g. get channel authentication), send the appropriate
+    response.  If it is a get session challenge or open rmcp+ request,
+    spawn a session to handle the context.
+    """
+    if len(data) < 22:
+        return
+    data = bytearray(data)
+    if not (data[0] == 6 and data[2:4] == b"\xff\x07"):  # not ipmi
+        return
+    authtype = data[4]
+    LOG.info("Requested authtype is %s" % authtype)
+    if authtype == 6:  # ipmi 2 payload...
+        payloadtype = data[5]
+        if payloadtype not in (0, 16):
+            return
+        if payloadtype == 16:  # new session to handle conversation
+            serversession(
+                self.authdata,
+                self.kg,
+                sockaddr,
+                self.serversocket,
+                data[16:],
+                self.uuid,
+                bmc=self,
+            )
+            return
+        # ditch two byte, because ipmi2 header is two
+        # bytes longer than ipmi1 (payload type added, payload length 2).
+        data = data[2:]
+    myaddr, netfnlun = struct.unpack("2B", bytes(data[14:16]))
+    netfn = (netfnlun & 0b11111100) >> 2
+    mylun = netfnlun & 0b11
+    if netfn == 6:  # application request
+        if data[19] == 0x38:  # cmd = get channel auth capabilities
+            verchannel, level = struct.unpack("2B", bytes(data[20:22]))
+            version = verchannel & 0b10000000
+            if version != 0b10000000:
+                return
+            channel = verchannel & 0b1111
+            if channel != 0xE:
+                return
+            (clientaddr, clientlun) = struct.unpack("BB", bytes(data[17:19]))
+            clientseq = clientlun >> 2
+            clientlun &= 0b11  # Lun is only the least significant bits
+            level &= 0b1111
+            if authtype == 6:
+                self.send_auth_cap_v2(
+                    myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr
+                )
+                LOG.info("Responding payload in ipmi v2")
+            else:
+                self.send_auth_cap(
+                    myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr
+                )
+                LOG.info("Responding payload")
+        elif data[19] == 0x54:
+            clientaddr, clientlun = data[17:19]
+            clientseq = clientlun >> 2
+            clientlun &= 0b11
+            self.send_cipher_suites(
+                myaddr, mylun, clientaddr, clientlun, clientseq, data, sockaddr
+            )
+
+
+# Functions for patch pyghmi to response to 0x38 in the forms of ipmi v2
+# Based on pyghmi 1.5.16
+# Apache License 2.0
+# https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
+def send_auth_cap_v2(self, myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr):
+    header = bytearray(
+        b"\x06\x00\xff\x07\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00"
+    )
+    headerdata = [clientaddr, clientlun | (7 << 2)]
+    headersum = ipmisession._checksum(*headerdata)
+    header += bytearray(
+        headerdata + [headersum, myaddr, mylun | (clientseq << 2), 0x38]
+    )
+    header += self.authcap
+    bodydata = struct.unpack("B" * len(header[19:]), bytes(header[19:]))
+
+    header.append(ipmisession._checksum(*bodydata))
+    ipmisession._io_sendto(self.serversocket, header, sockaddr)
+
+
+# Patch pyghmi with modified functions
+ipmiserver.sessionless_data = sessionless_data
+ipmiserver.send_auth_cap_v2 = send_auth_cap_v2
 
 
 class VirtualBMC(bmc.Bmc):
@@ -214,3 +317,43 @@ class VirtualBMC(bmc.Bmc):
             )
             # Command not supported in present state
             return IPMI_COMMAND_NODE_BUSY
+
+    # Based on pyghmi 1.5.16
+    # Apache License 2.0
+    # https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/bmc.py
+    def handle_raw_request(self, request, session):
+        LOG.info(
+            "Received netfn = 0x%x (%d), command = 0x%x (%d), data = %s"
+            % (
+                request["netfn"],
+                request["netfn"],
+                request["command"],
+                request["command"],
+                request["data"].hex(),
+            )
+        )
+        try:
+            if request["netfn"] == 6:
+                if request["command"] == 1:  # get device id
+                    return self.send_device_id(session)
+                elif request["command"] == 2:  # cold reset
+                    return session.send_ipmi_response(code=self.cold_reset())
+                elif request["command"] == 0x48:  # activate payload
+                    return self.activate_payload(request, session)
+                elif request["command"] == 0x49:  # deactivate payload
+                    return self.deactivate_payload(request, session)
+            elif request["netfn"] == 0:
+                if request["command"] == 1:  # get chassis status
+                    return self.get_chassis_status(session)
+                elif request["command"] == 2:  # chassis control
+                    return self.control_chassis(request, session)
+                elif request["command"] == 8:  # set boot options
+                    return self.set_system_boot_options(request, session)
+                elif request["command"] == 9:  # get boot options
+                    return self.get_system_boot_options(request, session)
+            session.send_ipmi_response(code=0xC1)
+        except NotImplementedError:
+            session.send_ipmi_response(code=0xC1)
+        except Exception:
+            session._send_ipmi_net_payload(code=0xFF)
+            traceback.print_exc()
