@@ -168,6 +168,7 @@ class VirtualBMC(bmc.Bmc):
         password,
         port,
         address,
+        fakemac,
         vm_name,
         viserver,
         viserver_username=None,
@@ -178,6 +179,7 @@ class VirtualBMC(bmc.Bmc):
             {username: password}, port=port, address=address
         )
         self.vm_name = vm_name
+        self.fakemac = fakemac
         self._conn_args = {
             "vi": viserver,
             "vi_username": viserver_username,
@@ -361,8 +363,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.info("Requested parameter = %s" % req_param)
 
         if req_param == 5:  # mac address
-            # TODO: Dynamyc Injection
-            data.extend([0x02, 0x00, 0x00, 0x01, 0x01, 0x01])
+            data.extend(utils.convert_fakemac_string_to_bytes(self.fakemac))
         else:
             pass
 

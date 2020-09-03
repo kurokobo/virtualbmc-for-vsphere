@@ -154,6 +154,17 @@ class AddCommand(Command):
             ),
         )
         parser.add_argument(
+            "--fakemac",
+            dest="fakemac",
+            default=None,
+            help=(
+                "The fake MAC address to use to sanity check "
+                "by vCenter Server. Used only when register "
+                "as BMC for ESXi; defaults to ganarete from "
+                '"vm_name" automatically'
+            ),
+        )
+        parser.add_argument(
             "--viserver",
             dest="viserver",
             default=None,
@@ -242,6 +253,15 @@ class StopCommand(Command):
 
 class ListCommand(Lister):
     """List all virtual BMC instances"""
+
+    def get_parser(self, prog_name):
+        parser = super(ListCommand, self).get_parser(prog_name)
+
+        parser.add_argument(
+            "--fakemac", action="store_true", help="Display Fake MAC column"
+        )
+
+        return parser
 
     def take_action(self, args):
         rsp = self.app.zmq.communicate(

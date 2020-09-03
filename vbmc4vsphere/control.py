@@ -162,8 +162,13 @@ def command_dispatcher(vbmc_manager, data_in):
     elif command == "list":
         rc, tables = vbmc_manager.list()
 
-        header = ("VM name", "Status", "Address", "Port")
-        keys = ("vm_name", "status", "address", "port")
+        if data_in["fakemac"]:
+            header = ("VM name", "Status", "Address", "Port", "Fake MAC")
+            keys = ("vm_name", "status", "address", "port", "fakemac")
+        else:
+            header = ("VM name", "Status", "Address", "Port")
+            keys = ("vm_name", "status", "address", "port")
+
         return {
             "rc": rc,
             "header": header,

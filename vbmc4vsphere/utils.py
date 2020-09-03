@@ -10,7 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import hashlib
 import os
+import re
 import ssl
 import sys
 
@@ -156,6 +158,19 @@ def mask_dict_password(dictionary, secret="***"):
         if "password" in k:
             d[k] = secret
     return d
+
+
+def generate_fakemac_by_vm_name(vm_name):
+    hash = hashlib.md5(vm_name.encode()).digest()
+    fakemac = ":".join(
+        "%02x" % b for b in [0x02, 0x00, 0x00, hash[0], hash[1], hash[2]]
+    )
+    return fakemac
+
+
+def convert_fakemac_string_to_bytes(fakemac_str):
+    fakemac_bytes = [int(b, 16) for b in re.split(":|-", fakemac_str)]
+    return fakemac_bytes
 
 
 class detach_process(object):

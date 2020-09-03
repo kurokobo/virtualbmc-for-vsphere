@@ -40,6 +40,7 @@ class VirtualBMCManager(object):
         "password",
         "address",
         "port",
+        "fakemac",
         "vm_name",
         "viserver",
         "viserver_username",
@@ -69,6 +70,10 @@ class VirtualBMCManager(object):
                     value = None
 
                 bmc[item] = value
+
+            # Generate Fake MAC if needed
+            if bmc["fakemac"] is None:
+                bmc["fakemac"] = utils.generate_fakemac_by_vm_name(vm_name)
 
             # Port needs to be int
             bmc["port"] = config.getint(DEFAULT_SECTION, "port")
@@ -231,6 +236,7 @@ class VirtualBMCManager(object):
         password,
         port,
         address,
+        fakemac,
         vm_name,
         viserver,
         viserver_username,
@@ -259,6 +265,9 @@ class VirtualBMCManager(object):
             LOG.error(msg)
             return 1, msg
 
+        if fakemac is None:
+            fakemac = utils.generate_fakemac_by_vm_name(vm_name)
+
         try:
             self._store_config(
                 vm_name=vm_name,
@@ -266,6 +275,7 @@ class VirtualBMCManager(object):
                 password=password,
                 port=str(port),
                 address=address,
+                fakemac=fakemac.replace("-", ":"),
                 viserver=viserver,
                 viserver_username=viserver_username,
                 viserver_password=viserver_password,
