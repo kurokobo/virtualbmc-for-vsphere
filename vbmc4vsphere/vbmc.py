@@ -329,10 +329,93 @@ class VirtualBMC(bmc.Bmc):
             # Command not supported in present state
             return IPMI_COMMAND_NODE_BUSY
 
+    # Fake response to avoid any issues
+    def get_channel_access(self, request, session):
+        data = [
+            0b00100010,  # alerting disabled, auth enabled, always available
+            0x04,  # priviredge level limit = administrator
+        ]
+
+        session.send_ipmi_response(data=data)
+
+    # Fake response to avoid any issues
+    def get_channel_info(self, request, session):
+        data = [
+            0x02,  # channel number = 2
+            0x04,  # channel medium type = 802.3 LAN
+            0x01,  # channel protocol type = IPMB-1.0
+            0x80,  # session support = multi-session
+            0xF2,  # vendor id = 7154
+            0x1B,  # vendor id = 7154
+            0x00,  # vendor id = 7154
+            0x00,  # reserved
+            0x00,  # reserved
+        ]
+        session.send_ipmi_response(data=data)
+
+    # Fake response to avoid any issues
+    def get_lan_configuration_parameters(self, request, session):
+        data = [0]  # the first byte is revision, force to 0 as a dummy
+
+        req_param = request["data"][1]
+        LOG.info("Requested parameter = %s" % req_param)
+
+        if req_param == 5:  # mac address
+            # TODO: Dynamyc Injection
+            data.extend([0x02, 0x00, 0x00, 0x01, 0x01, 0x01])
+        else:
+            pass
+
+        LOG.info("ne: %s" % data)
+
+        if len(data) > 1:
+            session.send_ipmi_response(data=data)
+        else:
+            session.send_ipmi_response(data=data, code=0x80)
+
     # Based on pyghmi 1.5.16
     # Apache License 2.0
     # https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/bmc.py
     def handle_raw_request(self, request, session):
+        # Typical functions and commands
+        # 0x00:0x00: Chassis         : Chassis Capabilities
+        # 0x00:0x01: Chassis         : Get Chassis Status
+        # 0x00:0x02: Chassis         : Chassis Control
+        # 0x00:0x08: Chassis         : Set System Boot Options
+        # 0x00:0x09: Chassis         : Get System Boot Options
+        # 0x04:0x2D: Sensor/Event    : Get Sensor Reading
+        # 0x04:0x2F: Sensor/Event    : Get Sensor Type
+        # 0x04:0x30: Sensor/Event    : Set Sensor Reading and Event Status
+        # 0x06:0x01: App             : Get Device ID
+        # 0x06:0x02: App             : Cold Reset
+        # 0x06:0x03: App             : Warm Reset
+        # 0x06:0x04: App             : Get Self Test Results
+        # 0x06:0x08: App             : Get Device GUID
+        # 0x06:0x22: App             : Reset Watchdog Timer
+        # 0x06:0x24: App             : Set Watchdog Timer
+        # 0x06:0x2E: App             : Set BMC Global Enables
+        # 0x06:0x31: App             : Get Message Flags
+        # 0x06:0x35: App             : Read Event Message Buffer
+        # 0x06:0x36: App             : Get BT Interface Capabilities
+        # 0x06:0x40: App             : Set Channel Access
+        # 0x06:0x41: App             : Get Channel Access
+        # 0x06:0x42: App             : Get Channel Info Command
+        # 0x0A:0x10: Storage         : Get FRU Inventory Area Info
+        # 0x0A:0x11: Storage         : Read FRU Data
+        # 0x0A:0x12: Storage         : Write FRU Data
+        # 0x0A:0x40: Storage         : Get SEL Info
+        # 0x0A:0x42: Storage         : Reserve SEL
+        # 0x0A:0x44: Storage         : Add SEL Entry
+        # 0x0A:0x48: Storage         : Get SEL Time
+        # 0x0A:0x49: Storage         : Set SEL Time
+        # 0x0C:0x01: Transport       : Set LAN Configuration Parameters
+        # 0x0C:0x02: Transport       : Get LAN Configuration Parameters
+        # 0x2C:0x00: Group Extension : Group Extension Command
+        # 0x2C:0x03: Group Extension : Get Power Limit
+        # 0x2C:0x04: Group Extension : Set Power Limit
+        # 0x2C:0x05: Group Extension : Activate/Deactivate Power Limit
+        # 0x2C:0x06: Group Extension : Get Asset Tag
+        # 0x2C:0x08: Group Extension : Set Asset Tag
         LOG.info(
             "Received netfn = 0x%x (%d), command = 0x%x (%d), data = %s"
             % (
@@ -349,6 +432,10 @@ class VirtualBMC(bmc.Bmc):
                     return self.send_device_id(session)
                 elif request["command"] == 2:  # cold reset
                     return session.send_ipmi_response(code=self.cold_reset())
+                elif request["command"] == 0x41:  # get channel access
+                    return self.get_channel_access(request, session)
+                elif request["command"] == 0x42:  # get channel info
+                    return self.get_channel_info(request, session)
                 elif request["command"] == 0x48:  # activate payload
                     return self.activate_payload(request, session)
                 elif request["command"] == 0x49:  # deactivate payload
@@ -362,6 +449,9 @@ class VirtualBMC(bmc.Bmc):
                     return self.set_system_boot_options(request, session)
                 elif request["command"] == 9:  # get boot options
                     return self.get_system_boot_options(request, session)
+            elif request["netfn"] == 12:
+                if request["command"] == 2:  # get lan configuration parameters
+                    return self.get_lan_configuration_parameters(request, session)
             session.send_ipmi_response(code=0xC1)
         except NotImplementedError:
             session.send_ipmi_response(code=0xC1)
