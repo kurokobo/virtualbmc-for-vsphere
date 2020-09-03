@@ -71,7 +71,6 @@ def sessionless_data(self, data, sockaddr):
     if not (data[0] == 6 and data[2:4] == b"\xff\x07"):  # not ipmi
         return
     authtype = data[4]
-    LOG.info("Requested authtype is %s" % authtype)
     if authtype == 6:  # ipmi 2 payload...
         payloadtype = data[5]
         if payloadtype not in (0, 16):
@@ -110,12 +109,10 @@ def sessionless_data(self, data, sockaddr):
                 self.send_auth_cap_v2(
                     myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr
                 )
-                LOG.info("Responding payload in ipmi v2")
             else:
                 self.send_auth_cap(
                     myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr
                 )
-                LOG.info("Responding payload")
         elif data[19] == 0x54:
             clientaddr, clientlun = data[17:19]
             clientseq = clientlun >> 2
