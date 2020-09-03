@@ -3,9 +3,9 @@
 
 ## Overview
 
-A virtual BMC for controlling virtual machines using IPMI commands for the vSphere environment.
+A virtual BMC for controlling virtual machines using IPMI commands for the VMware vSphere environment.
 
-In other words, the vSphere version of [VirtualBMC](https://github.com/openstack/virtualbmc) part of the OpenStack project.
+In other words, the VMware vSphere version of [VirtualBMC](https://github.com/openstack/virtualbmc) part of the OpenStack project.
 
 ![Demo](https://user-images.githubusercontent.com/2920259/91665870-a7d78400-eb33-11ea-8d5b-33d98b3fe107.gif)
 
@@ -246,7 +246,7 @@ Even if this problem is solved, vSphere and its BMC are expected to closely work
 
 ## Reference resources
 
-This project is started based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce) and customized to support the vSphere environment instead of the OpenStack. 
+This project is started based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce) and customized to support the VMware vSphere environment instead of the OpenStack. 
 
 * Original VirtualBMC documentation (for OpenStack): https://docs.openstack.org/virtualbmc/latest
 * Its source: https://opendev.org/openstack/virtualbmc
