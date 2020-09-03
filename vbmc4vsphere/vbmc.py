@@ -52,7 +52,7 @@ SET_BOOT_DEVICES_MAP = {
 }
 
 
-# Functions for patch pyghmi to handle sessionless IPMIv2 data
+# Functions for patch pyghmi to handle sessionless IPMIv2 data and ASF Presence Ping
 # Based on pyghmi 1.5.16
 # Apache License 2.0
 # https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
@@ -65,9 +65,13 @@ def sessionless_data(self, data, sockaddr):
     response.  If it is a get session challenge or open rmcp+ request,
     spawn a session to handle the context.
     """
-    if len(data) < 22:
-        return
     data = bytearray(data)
+    if len(data) < 22:
+        if data[0:4] == b"\x06\x00\xff\x06" and data[8] == 0x80:  # asf presense ping
+            LOG.info("Responding to asf presence ping")
+            send_asf_presence_pong(self, data, sockaddr)
+        else:
+            return
     if not (data[0] == 6 and data[2:4] == b"\xff\x07"):  # not ipmi
         return
     authtype = data[4]
@@ -139,6 +143,16 @@ def send_auth_cap_v2(self, myaddr, mylun, clientaddr, clientlun, clientseq, sock
     bodydata = struct.unpack("B" * len(header[19:]), bytes(header[19:]))
 
     header.append(ipmisession._checksum(*bodydata))
+    ipmisession._io_sendto(self.serversocket, header, sockaddr)
+
+
+# Functions for patch pyghmi to response to asf presence ping
+def send_asf_presence_pong(self, data, sockaddr):
+    header = bytearray(
+        b"\x06\x00\xff\x06\x00\x00\x11\xbe\x40"
+        + struct.pack("B", data[9])
+        + b"\x00\x10\x00\x00\x11\xbe\x00\x00\x00\x00\x81\x00\x00\x00\x00\x00\x00\x00"
+    )
     ipmisession._io_sendto(self.serversocket, header, sockaddr)
 
 
