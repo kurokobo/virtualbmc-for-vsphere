@@ -47,36 +47,8 @@ class viserver_open(object):
             raise exception.VIServerConnectionOpenError(vi=self.vi, error=e)
 
         return self.conn
-        # try:
-        #     if self.vi_username and self.vi_password:
-        #
-        #         def request_cred(credentials, user_data):
-        #             for credential in credentials:
-        #                 if credential[0] == libvirt.VIR_CRED_AUTHNAME:
-        #                     credential[4] = self.vi_username
-        #                 elif credential[0] == libvirt.VIR_CRED_PASSPHRASE:
-        #                     credential[4] = self.vi_password
-        #             return 0
-        #
-        #         auth = [
-        #             [libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE],
-        #             request_cred,
-        #             None,
-        #         ]
-        #         flags = libvirt.VIR_CONNECT_RO if self.readonly else 0
-        #         self.conn = libvirt.openAuth(self.vi, auth, flags)
-        #     elif self.readonly:
-        #         self.conn = libvirt.openReadOnly(self.vi)
-        #     else:
-        #         self.conn = libvirt.open(self.vi)
-        #
-        #     return self.conn
-        #
-        # except libvirt.libvirtError as e:
-        #     raise exception.VIServerConnectionOpenError(vi=self.vi, error=e)
 
     def __exit__(self, type, value, traceback):
-        # self.conn.close()
         _ = Disconnect(self.conn)
 
 

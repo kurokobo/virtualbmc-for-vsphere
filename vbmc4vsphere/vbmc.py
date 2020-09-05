@@ -52,10 +52,6 @@ SET_BOOT_DEVICES_MAP = {
 }
 
 
-# Functions for patch pyghmi to handle sessionless IPMIv2 data and ASF Presence Ping
-# Based on pyghmi 1.5.16
-# Apache License 2.0
-# https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
 def sessionless_data(self, data, sockaddr):
     """Examines unsolocited packet and decides appropriate action.
 
@@ -64,12 +60,17 @@ def sessionless_data(self, data, sockaddr):
     sessionless (e.g. get channel authentication), send the appropriate
     response.  If it is a get session challenge or open rmcp+ request,
     spawn a session to handle the context.
+
+    Patched by VirtualBMC for vSphere to handle sessionless IPMIv2
+    packet and ASF Presence Ping.
+    Based on pyghmi 1.5.16, Apache License 2.0
+    https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
     """
     data = bytearray(data)
     if len(data) < 22:
-        if data[0:4] == b"\x06\x00\xff\x06" and data[8] == 0x80:  # asf presense ping
+        if data[0:4] == b"\x06\x00\xff\x06" and data[8] == 0x80:  # asf presence ping
             LOG.info("Responding to asf presence ping")
-            send_asf_presence_pong(self, data, sockaddr)
+            self.send_asf_presence_pong(data, sockaddr)
         else:
             return
     if not (data[0] == 6 and data[2:4] == b"\xff\x07"):  # not ipmi
@@ -126,11 +127,14 @@ def sessionless_data(self, data, sockaddr):
             )
 
 
-# Functions for patch pyghmi to response to 0x38 in the forms of ipmi v2
-# Based on pyghmi 1.5.16
-# Apache License 2.0
-# https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
 def send_auth_cap_v2(self, myaddr, mylun, clientaddr, clientlun, clientseq, sockaddr):
+    """Send response to "get channel auth cap (0x38)" command with IPMI 2.0 headers.
+
+    Copied from send_auth_cap function and modified to send response
+    in the form of IPMI 2.0.
+    Based on pyghmi 1.5.16, Apache License 2.0
+    https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/private/serversession.py
+    """
     header = bytearray(
         b"\x06\x00\xff\x07\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00"
     )
@@ -146,8 +150,9 @@ def send_auth_cap_v2(self, myaddr, mylun, clientaddr, clientlun, clientseq, sock
     ipmisession._io_sendto(self.serversocket, header, sockaddr)
 
 
-# Functions for patch pyghmi to response to asf presence ping
 def send_asf_presence_pong(self, data, sockaddr):
+    """Send response to ASF Presence Ping.
+    """
     header = bytearray(
         b"\x06\x00\xff\x06\x00\x00\x11\xbe\x40"
         + struct.pack("B", data[9])
@@ -159,6 +164,7 @@ def send_asf_presence_pong(self, data, sockaddr):
 # Patch pyghmi with modified functions
 ipmiserver.sessionless_data = sessionless_data
 ipmiserver.send_auth_cap_v2 = send_auth_cap_v2
+ipmiserver.send_asf_presence_pong = send_asf_presence_pong
 
 
 class VirtualBMC(bmc.Bmc):
@@ -331,17 +337,25 @@ class VirtualBMC(bmc.Bmc):
             # Command not supported in present state
             return IPMI_COMMAND_NODE_BUSY
 
-    # Fake response to avoid any issues
     def get_channel_access(self, request, session):
+        """Fake response to "get channel access" command.
+
+        Send dummy packet to response "get channel access" command.
+        Just exists to be able to negotiate with vCenter Server.
+        """
         data = [
             0b00100010,  # alerting disabled, auth enabled, always available
             0x04,  # priviredge level limit = administrator
         ]
-
         session.send_ipmi_response(data=data)
 
-    # Fake response to avoid any issues
     def get_channel_info(self, request, session):
+        """Fake response to "get channel access" command.
+
+        Send dummy packet to response "get channel access" command
+        as 802.3 LAN channel.
+        Just exists to be able to negotiate with vCenter Server.
+        """
         data = [
             0x02,  # channel number = 2
             0x04,  # channel medium type = 802.3 LAN
@@ -355,8 +369,13 @@ class VirtualBMC(bmc.Bmc):
         ]
         session.send_ipmi_response(data=data)
 
-    # Fake response to avoid any issues
     def get_lan_configuration_parameters(self, request, session):
+        """Fake response to "get lan conf params" command.
+
+        Send dummy packet to response "get lan conf params" command
+        with fake MAC address.
+        Just exists to be able to negotiate with vCenter Server.
+        """
         data = [0]  # the first byte is revision, force to 0 as a dummy
 
         req_param = request["data"][1]
@@ -374,49 +393,52 @@ class VirtualBMC(bmc.Bmc):
         else:
             session.send_ipmi_response(data=data, code=0x80)
 
-    # Based on pyghmi 1.5.16
-    # Apache License 2.0
-    # https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/bmc.py
     def handle_raw_request(self, request, session):
-        # Typical functions and commands
-        # 0x00:0x00: Chassis         : Chassis Capabilities
-        # 0x00:0x01: Chassis         : Get Chassis Status
-        # 0x00:0x02: Chassis         : Chassis Control
-        # 0x00:0x08: Chassis         : Set System Boot Options
-        # 0x00:0x09: Chassis         : Get System Boot Options
-        # 0x04:0x2D: Sensor/Event    : Get Sensor Reading
-        # 0x04:0x2F: Sensor/Event    : Get Sensor Type
-        # 0x04:0x30: Sensor/Event    : Set Sensor Reading and Event Status
-        # 0x06:0x01: App             : Get Device ID
-        # 0x06:0x02: App             : Cold Reset
-        # 0x06:0x03: App             : Warm Reset
-        # 0x06:0x04: App             : Get Self Test Results
-        # 0x06:0x08: App             : Get Device GUID
-        # 0x06:0x22: App             : Reset Watchdog Timer
-        # 0x06:0x24: App             : Set Watchdog Timer
-        # 0x06:0x2E: App             : Set BMC Global Enables
-        # 0x06:0x31: App             : Get Message Flags
-        # 0x06:0x35: App             : Read Event Message Buffer
-        # 0x06:0x36: App             : Get BT Interface Capabilities
-        # 0x06:0x40: App             : Set Channel Access
-        # 0x06:0x41: App             : Get Channel Access
-        # 0x06:0x42: App             : Get Channel Info Command
-        # 0x0A:0x10: Storage         : Get FRU Inventory Area Info
-        # 0x0A:0x11: Storage         : Read FRU Data
-        # 0x0A:0x12: Storage         : Write FRU Data
-        # 0x0A:0x40: Storage         : Get SEL Info
-        # 0x0A:0x42: Storage         : Reserve SEL
-        # 0x0A:0x44: Storage         : Add SEL Entry
-        # 0x0A:0x48: Storage         : Get SEL Time
-        # 0x0A:0x49: Storage         : Set SEL Time
-        # 0x0C:0x01: Transport       : Set LAN Configuration Parameters
-        # 0x0C:0x02: Transport       : Get LAN Configuration Parameters
-        # 0x2C:0x00: Group Extension : Group Extension Command
-        # 0x2C:0x03: Group Extension : Get Power Limit
-        # 0x2C:0x04: Group Extension : Set Power Limit
-        # 0x2C:0x05: Group Extension : Activate/Deactivate Power Limit
-        # 0x2C:0x06: Group Extension : Get Asset Tag
-        # 0x2C:0x08: Group Extension : Set Asset Tag
+        """Call the appropriate function depending on the received command.
+
+        Based on pyghmi 1.5.16, Apache License 2.0
+        https://opendev.org/x/pyghmi/src/branch/master/pyghmi/ipmi/bmc.py
+        """
+        # | FNC:CMD   | NetFunc         | Command                             |
+        # | --------- | ----------------|------------------------------------ |
+        # | 0x00:0x00 | Chassis         | Chassis Capabilities                |
+        # | 0x00:0x01 | Chassis         | Get Chassis Status                  |
+        # | 0x00:0x02 | Chassis         | Chassis Control                     |
+        # | 0x00:0x08 | Chassis         | Set System Boot Options             |
+        # | 0x00:0x09 | Chassis         | Get System Boot Options             |
+        # | 0x04:0x2D | Sensor/Event    | Get Sensor Reading                  |
+        # | 0x04:0x2F | Sensor/Event    | Get Sensor Type                     |
+        # | 0x04:0x30 | Sensor/Event    | Set Sensor Reading and Event Status |
+        # | 0x06:0x01 | App             | Get Device ID                       |
+        # | 0x06:0x02 | App             | Cold Reset                          |
+        # | 0x06:0x03 | App             | Warm Reset                          |
+        # | 0x06:0x04 | App             | Get Self Test Results               |
+        # | 0x06:0x08 | App             | Get Device GUID                     |
+        # | 0x06:0x22 | App             | Reset Watchdog Timer                |
+        # | 0x06:0x24 | App             | Set Watchdog Timer                  |
+        # | 0x06:0x2E | App             | Set BMC Global Enables              |
+        # | 0x06:0x31 | App             | Get Message Flags                   |
+        # | 0x06:0x35 | App             | Read Event Message Buffer           |
+        # | 0x06:0x36 | App             | Get BT Interface Capabilities       |
+        # | 0x06:0x40 | App             | Set Channel Access                  |
+        # | 0x06:0x41 | App             | Get Channel Access                  |
+        # | 0x06:0x42 | App             | Get Channel Info Command            |
+        # | 0x0A:0x10 | Storage         | Get FRU Inventory Area Info         |
+        # | 0x0A:0x11 | Storage         | Read FRU Data                       |
+        # | 0x0A:0x12 | Storage         | Write FRU Data                      |
+        # | 0x0A:0x40 | Storage         | Get SEL Info                        |
+        # | 0x0A:0x42 | Storage         | Reserve SEL                         |
+        # | 0x0A:0x44 | Storage         | Add SEL Entry                       |
+        # | 0x0A:0x48 | Storage         | Get SEL Time                        |
+        # | 0x0A:0x49 | Storage         | Set SEL Time                        |
+        # | 0x0C:0x01 | Transport       | Set LAN Configuration Parameters    |
+        # | 0x0C:0x02 | Transport       | Get LAN Configuration Parameters    |
+        # | 0x2C:0x00 | Group Extension | Group Extension Command             |
+        # | 0x2C:0x03 | Group Extension | Get Power Limit                     |
+        # | 0x2C:0x04 | Group Extension | Set Power Limit                     |
+        # | 0x2C:0x05 | Group Extension | Activate/Deactivate Power Limit     |
+        # | 0x2C:0x06 | Group Extension | Get Asset Tag                       |
+        # | 0x2C:0x08 | Group Extension | Set Asset Tag                       |
         LOG.info(
             "Received netfn = 0x%x (%d), command = 0x%x (%d), data = %s"
             % (
