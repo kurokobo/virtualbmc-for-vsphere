@@ -7,7 +7,15 @@ A virtual BMC for controlling virtual machines using IPMI commands for the VMwar
 
 In other words, the VMware vSphere version of [VirtualBMC](https://github.com/openstack/virtualbmc) part of the OpenStack project.
 
+Sinse version `0.0.3`, **this can be used as a BMC of Nested-ESXi**, therefore **you can make the vSphere DPM work in your nested environment** for testing purpose.
+
 ![Demo](https://user-images.githubusercontent.com/2920259/91665870-a7d78400-eb33-11ea-8d5b-33d98b3fe107.gif)
+
+See:
+
+* 📖[The guide to use with Nested-ESXi and vCenter Server](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
+* 📖[The guide to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
+
 
 
 ### Disclaimer
@@ -31,6 +39,12 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|sof
 
 # Check the power status
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power status
+
+# Get the channel info. Note that its output is always a dummy, not actual information.
+ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 channel info
+
+# Get the network info. Note that its output is always a dummy, not actual information.
+ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 lan print 1
 ```
 
 Not Implemented yet:
@@ -219,29 +233,23 @@ active = True
 ```
 
 
+### Use with Nested-ESXi and vCenter Server
+
+In the vCenter Server, by using VirtualBMC for vSphere (`0.0.3` or later), **you can enable the vSphere DPM: Distributed Power Management feature** for Nested-ESXi host that is running in your VMware vSphere environment. 
+
+So you can achieve:
+
+* Power-On the virtual ESXi in the same way as for physical ESXi.
+* Automated power on/off control of ESXi hosts based on the load of the host cluster by vCenter Server.
+
+See 📖[the guide on GitHub Wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
+
+
 ### Use with Nested-KVM and oVirt
 
 In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Management feature for Nested-KVM that is running in your vSphere environment.
 
-To do this, configure the Fence Agent with following parameters:
-
-* Enter the IP address of your VirtualBMC host in the `Address` field.
-* Enter the `User Name` and `Password` as configured in VirtualBMC.
-* Select `ipmilan` in the `Type` drop-down list.
-* Enter `lanplus=1,ipport=<your-port-number>` like `lanplus=1,ipport=6230` in the `Options` field.
-
-
-### Use with Nested-ESXi and vCenter Server
-
-Currently, VirtualBMC for vSphere can't be registered as the BMC for ESXi. So saddly the vSphere Distributed Power Management (DPM) can't work in the nested environment.
-
-It seems the `pyghmi.ipmi.bmc` and its session control on which VirtualBMC depends doesn't seem to be able to negotiate in IPMI with vCenter Server when the new BMC has added. 
-
-I'm not familiar with IPMI, normally, when working with `ipmitool` and the like, the first data frame is the command to get the authentication capabilities (`0x38`) as IPMI v1.5 (`Authentication Type` = `0x00`). But on a data frame from vCenter Server, the same command is sent as IPMI v2.0 (`Authentication Type` = `0x06`). The header structure differs between those versions, so I guess this is why the VirtualBMC can't start a negotiation.
-
-Even if this problem is solved, vSphere and its BMC are expected to closely work with not only power management, so its emulation may be difficult enough to get DPM to work.
-
-**UPDATE**: I've done patching `pyghmi` to be able to handle `0x38` command sent as IPMI v2.0 and now VirtualBMC can negotiate with vCenter Server. But after negotiation vCenter Server send the command to get channel information (`NetFn` = `0x06`, `Command` = `0x42`, `Channel` = `0x0e`) that difficult to emulate responses.
+See 📖[the guide on GitHub Wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
 
 
 ## Reference resources
