@@ -22,6 +22,7 @@ See:
 
 * For testing purposes only. Not for production use.
 * The vCenter Server credentials including password are stored in plain text.
+* The vSphere DPM can be enabled with VirtualBMC for vSphere, but be careful with the recommendations presented in the vSphere DPM in nested environments may not be accurate or meet expectations. [See the wiki page for detail](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server#notice).
 
 
 ### Installation
@@ -29,6 +30,8 @@ See:
 ```bash
 pip install vbmc4vsphere
 ```
+
+If you want to run VirtualBMC for vSphere in Docker container, [see the guide on wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Containerized-VirtualBMC-for-vSphere).
 
 
 ### Supported IPMI commands
@@ -137,7 +140,7 @@ pip install vbmc4vsphere
   | vm_name           | lab-vesxi01        |
   +-------------------+--------------------+
   ```
-* Stopping the virtual BMC to control VMs:
+* Stopping the virtual BMC:
   ```bash
   $ vbmc stop lab-vesxi01
   $ vbmc stop lab-vesxi02
@@ -242,14 +245,14 @@ So you can achieve:
 * Power-On the virtual ESXi in the same way as for physical ESXi.
 * Automated power on/off control of ESXi hosts based on the load of the host cluster by vCenter Server.
 
-See 📖[the guide on GitHub Wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
+See 📖[the guide on GitHub Wiki page to use with Nested-ESXi and vCenter Server](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
 
 
 ### Use with Nested-KVM and oVirt
 
 In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Management feature for Nested-KVM that is running in your vSphere environment.
 
-See 📖[the guide on GitHub Wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
+See 📖[the guide on GitHub Wiki page to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
 
 
 ## Reference resources
