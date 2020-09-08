@@ -43,6 +43,12 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|sof
 # Check the power status
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power status
 
+# Set the boot device to network, dick or cdrom
+ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 chassis bootdev pxe|disk|cdrom
+
+# Get the current boot device
+ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 chassis bootparam get 5
+
 # Get the channel info. Note that its output is always a dummy, not actual information.
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 channel info
 
@@ -53,8 +59,6 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 lan print 1
 Not Implemented yet:
 
 * Inject NMI: `power diag`
-* Set the boot device to network, hd or cdrom: `chassis bootdev pxe|disk|cdrom`
-* Get the current boot device: `chassis bootparam get 5`
 
 
 ## Architecture

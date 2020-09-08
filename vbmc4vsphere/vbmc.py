@@ -40,15 +40,17 @@ IPMI_INVALID_DATA = 0xCC
 
 # Boot device maps
 GET_BOOT_DEVICES_MAP = {
-    "network": 4,
-    "hd": 8,
+    "ethernet": 0x4,
+    "disk": 0x8,
     "cdrom": 0x14,
+    "floppy": 0x3C,
 }
 
 SET_BOOT_DEVICES_MAP = {
-    "network": "network",
-    "hd": "hd",
+    "network": "ethernet",
+    "hd": "disk",
     "optical": "cdrom",
+    "floppy": "floppy",
 }
 
 
@@ -194,14 +196,23 @@ class VirtualBMC(bmc.Bmc):
 
     def get_boot_device(self):
         LOG.debug("Get boot device called for %(vm)s", {"vm": self.vm_name})
-        return IPMI_COMMAND_NODE_BUSY
-        # with utils.libvirt_open(readonly=True, **self._conn_args) as conn:
-        #     vm = utils.get_libvirt_vm(conn, self.vm_name)
-        #     boot_element = ET.fromstring(vm.XMLDesc()).find('.//os/boot')
-        #     boot_dev = None
-        #     if boot_element is not None:
-        #         boot_dev = boot_element.attrib.get('dev')
-        #     return GET_BOOT_DEVICES_MAP.get(boot_dev, 0)
+        try:
+            with utils.viserver_open(**self._conn_args) as conn:
+                vm = utils.get_viserver_vm(conn, self.vm_name)
+                boot_element = vm.config.bootOptions.bootOrder
+                boot_dev = None
+                if boot_element:
+                    boot_dev = utils.get_bootable_device_type(conn, boot_element[0])
+                LOG.debug("Boot device is: %s" % boot_dev)
+                return GET_BOOT_DEVICES_MAP.get(boot_dev, 0)
+            return IPMI_COMMAND_NODE_BUSY
+        except Exception as e:
+            msg = "Error getting boot device of vm %(vm)s. " "Error: %(error)s" % {
+                "vm": self.vm_name,
+                "error": e,
+            }
+            LOG.error(msg)
+            raise exception.VirtualBMCError(message=msg)
 
     def _remove_boot_elements(self, parent_element):
         for boot_element in parent_element.findall("boot"):
@@ -212,37 +223,23 @@ class VirtualBMC(bmc.Bmc):
             "Set boot device called for %(vm)s with boot " 'device "%(bootdev)s"',
             {"vm": self.vm_name, "bootdev": bootdevice},
         )
-        return IPMI_COMMAND_NODE_BUSY
-        # device = SET_BOOT_DEVICES_MAP.get(bootdevice)
-        # if device is None:
-        #     # Invalid data field in request
-        #     return IPMI_INVALID_DATA
-        #
-        # try:
-        #     with utils.libvirt_open(**self._conn_args) as conn:
-        #         vm = utils.get_libvirt_vm(conn, self.vm_name)
-        #         tree = ET.fromstring(vm.XMLDesc())
-        #
-        #         # Remove all "boot" element under "devices"
-        #         # They are mutually exclusive with "os/boot"
-        #         for device_element in tree.findall('devices/*'):
-        #             self._remove_boot_elements(device_element)
-        #
-        #         for os_element in tree.findall('os'):
-        #             # Remove all "boot" elements under "os"
-        #             self._remove_boot_elements(os_element)
-        #
-        #             # Add a new boot element with the request boot device
-        #             boot_element = ET.SubElement(os_element, 'boot')
-        #             boot_element.set('dev', device)
-        #
-        #         conn.defineXML(ET.tostring(tree, encoding="unicode"))
-        # except libvirt.libvirtError:
-        #     LOG.error('Failed setting the boot device  %(bootdev)s for '
-        #               'vm %(vm)s', {'bootdev': device,
-        #                                     'vm': self.vm_name})
-        #     # Command failed, but let client to retry
-        #     return IPMI_COMMAND_NODE_BUSY
+        device = SET_BOOT_DEVICES_MAP.get(bootdevice)
+        if device is None:
+            # Invalid data field in request
+            return IPMI_INVALID_DATA
+        try:
+            with utils.viserver_open(**self._conn_args) as conn:
+                vm = utils.get_viserver_vm(conn, self.vm_name)
+                utils.set_boot_order(conn, vm, device)
+            return IPMI_COMMAND_NODE_BUSY
+        except Exception as e:
+            LOG.error(
+                "Failed setting the boot device %(bootdev)s for vm %(vm)s."
+                "Error: %(error)s",
+                {"bootdev": device, "vm": self.vm_name, "error": e},
+            )
+            # Command failed, but let client to retry
+            return IPMI_COMMAND_NODE_BUSY
 
     def get_power_state(self):
         LOG.debug("Get power state called for vm %(vm)s", {"vm": self.vm_name})

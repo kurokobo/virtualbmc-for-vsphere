@@ -101,6 +101,78 @@ def get_viserver_vm(conn, vm):
         raise exception.VMNotFound(vm=vm)
 
 
+def get_bootable_device_type(conn, boot_dev):
+    if isinstance(boot_dev, vim.vm.BootOptions.BootableFloppyDevice):
+        return "floppy"
+    elif isinstance(boot_dev, vim.vm.BootOptions.BootableDiskDevice):
+        return "disk"
+    elif isinstance(boot_dev, vim.vm.BootOptions.BootableCdromDevice):
+        return "cdrom"
+    elif isinstance(boot_dev, vim.vm.BootOptions.BootableEthernetDevice):
+        return "ethernet"
+
+
+def set_boot_order(conn, vm, device):
+    """Set boot device to specified device.
+
+    https://github.com/ansible-collections/vmware/blob/main/plugins/module_utils/vmware.py
+    """
+
+    boot_order_list = []
+    if device == "cdrom":
+        bootable_cdroms = [
+            dev
+            for dev in vm.config.hardware.device
+            if isinstance(dev, vim.vm.device.VirtualCdrom)
+        ]
+        if bootable_cdroms:
+            boot_order_list.append(vim.vm.BootOptions.BootableCdromDevice())
+    elif device == "disk":
+        bootable_disks = [
+            dev
+            for dev in vm.config.hardware.device
+            if isinstance(dev, vim.vm.device.VirtualDisk)
+        ]
+        if bootable_disks:
+            boot_order_list.extend(
+                [
+                    vim.vm.BootOptions.BootableDiskDevice(deviceKey=bootable_disk.key)
+                    for bootable_disk in bootable_disks
+                ]
+            )
+    elif device == "ethernet":
+        bootable_ethernets = [
+            dev
+            for dev in vm.config.hardware.device
+            if isinstance(dev, vim.vm.device.VirtualEthernetCard)
+        ]
+        if bootable_ethernets:
+            boot_order_list.extend(
+                [
+                    vim.vm.BootOptions.BootableEthernetDevice(
+                        deviceKey=bootable_ethernet.key
+                    )
+                    for bootable_ethernet in bootable_ethernets
+                ]
+            )
+    elif device == "floppy":
+        bootable_floppy = [
+            dev
+            for dev in vm.config.hardware.device
+            if isinstance(dev, vim.vm.device.VirtualFloppy)
+        ]
+        if bootable_floppy:
+            boot_order_list.append(vim.vm.BootOptions.BootableFloppyDevice())
+
+    kwargs = dict()
+    kwargs.update({"bootOrder": boot_order_list})
+
+    vm_conf = vim.vm.ConfigSpec()
+    vm_conf.bootOptions = vim.vm.BootOptions(**kwargs)
+    vm.ReconfigVM_Task(vm_conf)
+    return
+
+
 def check_viserver_connection_and_vm(vi, vm, vi_username=None, vi_password=None):
     with viserver_open(
         vi, readonly=True, vi_username=vi_username, vi_password=vi_password
