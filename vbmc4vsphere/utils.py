@@ -15,6 +15,9 @@ import os
 import re
 import ssl
 import sys
+import urllib.parse
+import urllib.request
+from threading import Thread
 
 from pyVim.connect import Disconnect, SmartConnect
 from pyVmomi import vim, vmodl
@@ -112,7 +115,7 @@ def get_bootable_device_type(conn, boot_dev):
         return "ethernet"
 
 
-def set_boot_order(conn, vm, device):
+def set_boot_device(conn, vm, device):
     """Set boot device to specified device.
 
     https://github.com/ansible-collections/vmware/blob/main/plugins/module_utils/vmware.py
@@ -171,6 +174,37 @@ def set_boot_order(conn, vm, device):
     vm_conf.bootOptions = vim.vm.BootOptions(**kwargs)
     vm.ReconfigVM_Task(vm_conf)
     return
+
+
+def send_nmi(conn, vm):
+    """Send NMI to specified VM.
+
+    https://github.com/vmware/pyvmomi/issues/726
+    """
+    context = None
+    if hasattr(ssl, "_create_unverified_context"):
+        context = ssl._create_unverified_context()
+
+    vmx_path = vm.config.files.vmPathName
+    for ds_url in vm.config.datastoreUrl:
+        vmx_path = vmx_path.replace("[%s] " % ds_url.name, "%s/" % ds_url.url)
+
+    url = "https://%s/cgi-bin/vm-support.cgi?manifests=%s&vm=%s" % (
+        vm.runtime.host.name,
+        urllib.parse.quote_plus("HungVM:Send_NMI_To_Guest"),
+        urllib.parse.quote_plus(vmx_path),
+    )
+
+    spec = vim.SessionManager.HttpServiceRequestSpec(method="httpGet", url=url)
+    ticket = conn.content.sessionManager.AcquireGenericServiceTicket(spec)
+    headers = {
+        "Cookie": "vmware_cgi_ticket=%s" % ticket.id,
+    }
+
+    req = urllib.request.Request(url, headers=headers)
+    Thread(
+        target=urllib.request.urlopen, args=(req,), kwargs={"context": context}
+    ).start()
 
 
 def check_viserver_connection_and_vm(vi, vm, vi_username=None, vi_password=None):

@@ -230,8 +230,7 @@ class VirtualBMC(bmc.Bmc):
         try:
             with utils.viserver_open(**self._conn_args) as conn:
                 vm = utils.get_viserver_vm(conn, self.vm_name)
-                utils.set_boot_order(conn, vm, device)
-            return IPMI_COMMAND_NODE_BUSY
+                utils.set_boot_device(conn, vm, device)
         except Exception as e:
             LOG.error(
                 "Failed setting the boot device %(bootdev)s for vm %(vm)s."
@@ -260,19 +259,21 @@ class VirtualBMC(bmc.Bmc):
 
     def pulse_diag(self):
         LOG.debug("Power diag called for vm %(vm)s", {"vm": self.vm_name})
-        return IPMI_COMMAND_NODE_BUSY
-        # try:
-        #     with utils.libvirt_open(**self._conn_args) as conn:
-        #         vm = utils.get_libvirt_vm(conn, self.vm_name)
-        #         if vm.isActive():
-        #             vm.injectNMI()
-        # except libvirt.libvirtError as e:
-        #     LOG.error(
-        #         "Error powering diag the vm %(vm)s. " "Error: %(error)s",
-        #         {"vm": self.vm_name, "error": e},
-        #     )
-        #     # Command failed, but let client to retry
-        #     return IPMI_COMMAND_NODE_BUSY
+        try:
+            with utils.viserver_open(**self._conn_args) as conn:
+                vm = utils.get_viserver_vm(conn, self.vm_name)
+                utils.send_nmi(conn, vm)
+            LOG.debug(
+                "The NMI will be sent to the vm %(vm)s 60 seconds later",
+                {"vm": self.vm_name},
+            )
+        except Exception as e:
+            LOG.error(
+                "Error powering diag the vm %(vm)s. " "Error: %(error)s",
+                {"vm": self.vm_name, "error": e},
+            )
+            # Command failed, but let client to retry
+            return IPMI_COMMAND_NODE_BUSY
 
     def power_off(self):
         LOG.debug("Power off called for vm %(vm)s", {"vm": self.vm_name})

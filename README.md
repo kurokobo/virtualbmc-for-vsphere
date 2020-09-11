@@ -37,8 +37,8 @@ If you want to run VirtualBMC for vSphere in Docker container, [see the guide on
 ### Supported IPMI commands
 
 ```bash
-# Power the virtual machine on, off, graceful off and reset
-ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|soft|reset
+# Power the virtual machine on, off, graceful off, reset, and NMI. Note that NMI is currently experimental
+ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|soft|reset|diag
 
 # Check the power status
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power status
@@ -56,9 +56,8 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 channel info
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 lan print 1
 ```
 
-Not Implemented yet:
-
-* Inject NMI: `power diag`
+* Experimental support: `power diag`
+  * The command returns a response immediately, but the virtual machine receives NMI **60 seconds later**. This depends on the behavior of `debug-hung-vm` on the ESXi.
 
 
 ## Architecture
