@@ -15,6 +15,7 @@ See:
 
 * 📖[The guide to use with Nested-ESXi and vCenter Server](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
 * 📖[The guide to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
+* 📖[The guide to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
 
 
@@ -256,6 +257,17 @@ See 📖[the guide on GitHub Wiki page to use with Nested-ESXi and vCenter Serve
 In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Management feature for Nested-KVM that is running in your vSphere environment.
 
 See 📖[the guide on GitHub Wiki page to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
+
+
+### Use with OpenShift Baremetal IPI
+
+With VirtualBMC for vSphere, you can control your virtual machines in the same way as a physical server. This means that tasks that require a physical BMC can be done in a virtual environment.
+
+One such example is the provisioning of a physical server.
+
+Here's how to automatically provision OpenShift to a physical server, called Baremetal IPI, using a virtual machine in vSphere environment with VirtualBMC for vSphere.
+
+See 📖[the guide to GitHub Wiki page to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
 
 ## Reference resources
