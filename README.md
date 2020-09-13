@@ -1,5 +1,7 @@
 # VirtualBMC for vSphere (vbmc4vsphere)
 
+[![Downloads](https://pepy.tech/badge/vbmc4vsphere)](https://pepy.tech/project/vbmc4vsphere)
+
 
 ## Overview
 
