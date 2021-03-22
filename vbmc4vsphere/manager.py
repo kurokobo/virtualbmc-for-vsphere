@@ -32,6 +32,8 @@ DEFAULT_SECTION = "VirtualBMC"
 
 CONF = vbmc_config.get_config()
 
+# Always default to 'fork' multiprocessing
+multiprocessing.set_start_method("fork")
 
 class VirtualBMCManager(object):
 
