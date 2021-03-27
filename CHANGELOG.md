@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - N/A
 
+## [0.0.7] - 2021-03-27
+### Added
+- Add workaround for Python 3.8+ on macOS
+
 ## [0.0.6] - 2020-09-11
 ### Added
 - Add experimental support for `chassis power diag`
@@ -46,7 +50,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Project starts based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce)
 
 
-[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.6...HEAD
+[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.7...HEAD
+[0.0.7]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.6...0.0.7
 [0.0.6]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.5...0.0.6
 [0.0.5]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.4...0.0.5
 [0.0.4]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.3...0.0.4

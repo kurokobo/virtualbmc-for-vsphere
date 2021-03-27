@@ -7,9 +7,9 @@
 
 A virtual BMC for controlling virtual machines using IPMI commands for the VMware vSphere environment.
 
-In other words, the VMware vSphere version of [VirtualBMC](https://github.com/openstack/virtualbmc) part of the OpenStack project.
+In other words, this is the VMware vSphere version of [VirtualBMC](https://github.com/openstack/virtualbmc) part of the OpenStack project.
 
-Sinse version `0.0.3`, **this can be used as a BMC of Nested-ESXi**, therefore **you can make the vSphere DPM work in your nested environment** for testing purpose.
+**This can be used as a BMC of Nested-ESXi**, therefore **you can make the vSphere DPM work in your nested environment** for testing purpose.
 
 ![Demo](https://user-images.githubusercontent.com/2920259/91665870-a7d78400-eb33-11ea-8d5b-33d98b3fe107.gif)
 
