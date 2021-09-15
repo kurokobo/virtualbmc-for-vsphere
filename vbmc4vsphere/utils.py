@@ -55,45 +55,18 @@ class viserver_open(object):
         _ = Disconnect(self.conn)
 
 
-def get_obj(conn, root, vim_type):
+def get_obj_by_name(conn, root, vim_type, value):
+    objs = []
     container = conn.content.viewManager.CreateContainerView(root, vim_type, True)
-    view = container.view
+    for obj in container.view:
+        if obj.name == value:
+            objs.append(obj)
     container.Destroy()
-    return view
-
-
-def create_filter_spec(pc, vms, prop):
-    objSpecs = []
-    for vm in vms:
-        objSpec = vmodl.query.PropertyCollector.ObjectSpec(obj=vm)
-        objSpecs.append(objSpec)
-    filterSpec = vmodl.query.PropertyCollector.FilterSpec()
-    filterSpec.objectSet = objSpecs
-    propSet = vmodl.query.PropertyCollector.PropertySpec(all=False)
-    propSet.type = vim.VirtualMachine
-    propSet.pathSet = [prop]
-    filterSpec.propSet = [propSet]
-    return filterSpec
-
-
-def filter_results(result, value):
-    vms = []
-    for o in result.objects:
-        if o.propSet[0].val == value:
-            vms.append(o.obj)
-    return vms
-
+    return objs
 
 def get_viserver_vm(conn, vm):
     try:
-        vms = get_obj(conn, conn.content.rootFolder, [vim.VirtualMachine])
-        pc = conn.content.propertyCollector
-
-        filter_spec = create_filter_spec(pc, vms, "name")
-        options = vmodl.query.PropertyCollector.RetrieveOptions()
-        result = pc.RetrievePropertiesEx([filter_spec], options)
-
-        vms = filter_results(result, vm)
+        vms = get_obj_by_name(conn, conn.content.rootFolder, [vim.VirtualMachine], vm)
 
         if len(vms) != 1:
             raise Exception
