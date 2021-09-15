@@ -153,8 +153,7 @@ def send_auth_cap_v2(self, myaddr, mylun, clientaddr, clientlun, clientseq, sock
 
 
 def send_asf_presence_pong(self, data, sockaddr):
-    """Send response to ASF Presence Ping.
-    """
+    """Send response to ASF Presence Ping."""
     header = bytearray(
         b"\x06\x00\xff\x06\x00\x00\x11\xbe\x40"
         + struct.pack("B", data[9])

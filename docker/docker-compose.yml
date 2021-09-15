@@ -3,7 +3,7 @@ version: "3"
 services:
   vbmc4vsphere:
     container_name: vbmc4vsphere
-    image: ghcr.io/kurokobo/vbmc4vsphere:0.0.7
+    image: ghcr.io/kurokobo/vbmc4vsphere:0.0.8
     networks:
       - vbmc-network
     ports:

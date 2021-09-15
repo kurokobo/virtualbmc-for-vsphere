@@ -35,6 +35,7 @@ CONF = vbmc_config.get_config()
 # Always default to 'fork' multiprocessing
 multiprocessing.set_start_method("fork")
 
+
 class VirtualBMCManager(object):
 
     VBMC_OPTIONS = [
@@ -188,7 +189,8 @@ class VirtualBMCManager(object):
                     self._running_vms[vm_name] = instance
 
                     LOG.info(
-                        "Started vBMC instance for vm " "%(vm)s", {"vm": vm_name},
+                        "Started vBMC instance for vm " "%(vm)s",
+                        {"vm": vm_name},
                     )
 
                 if not instance.is_alive():

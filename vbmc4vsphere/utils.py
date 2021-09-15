@@ -20,7 +20,7 @@ import urllib.request
 from threading import Thread
 
 from pyVim.connect import Disconnect, SmartConnect
-from pyVmomi import vim, vmodl
+from pyVmomi import vim
 
 from vbmc4vsphere import exception
 
@@ -63,6 +63,7 @@ def get_obj_by_name(conn, root, vim_type, value):
             objs.append(obj)
     container.Destroy()
     return objs
+
 
 def get_viserver_vm(conn, vm):
     try:

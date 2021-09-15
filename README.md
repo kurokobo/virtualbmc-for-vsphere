@@ -2,7 +2,6 @@
 
 [![Downloads](https://pepy.tech/badge/vbmc4vsphere)](https://pepy.tech/project/vbmc4vsphere)
 
-
 ## Overview
 
 A virtual BMC for controlling virtual machines using IPMI commands for the VMware vSphere environment.
@@ -19,14 +18,11 @@ See:
 * 📖[The guide to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
 * 📖[The guide to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
-
-
 ### Disclaimer
 
 * For testing purposes only. Not for production use.
 * The vCenter Server credentials including password are stored in plain text.
 * The vSphere DPM can be enabled with VirtualBMC for vSphere, but be careful with the recommendations presented in the vSphere DPM in nested environments may not be accurate or meet expectations. [See the wiki page for detail](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server#notice).
-
 
 ### Installation
 
@@ -35,7 +31,6 @@ pip install vbmc4vsphere
 ```
 
 If you want to run VirtualBMC for vSphere in Docker container, [see the guide on wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Containerized-VirtualBMC-for-vSphere).
-
 
 ### Supported IPMI commands
 
@@ -62,16 +57,13 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 lan print 1
 * Experimental support: `power diag`
   * The command returns a response immediately, but the virtual machine receives NMI **60 seconds later**. This depends on the behavior of `debug-hung-vm` on the ESXi.
 
-
 ## Architecture
 
 ![Architecture](https://user-images.githubusercontent.com/2920259/91664084-c20b6500-eb27-11ea-8633-cc49ad6677d2.png)
 
-
 ## Quick Start
 
 Install VirtualBMC for vSphere on some linux host, start `vbmcd` daemon, and then configure through `vbmc` command.
-
 
 ### Installation
 
@@ -79,47 +71,60 @@ Install VirtualBMC for vSphere on some linux host, start `vbmcd` daemon, and the
 pip install vbmc4vsphere
 ```
 
-
 ### Start Daemon
 
 * Start daemon:
+
   ```bash
-  $ vbmcd
-  ```
-  By default, daemon starts in background. You can start it in foreground by `--foreground` option to get logs.
-  ```bash
-  $ vbmcd --foreground
+  vbmcd
   ```
 
+  By default, daemon starts in background. You can start it in foreground by `--foreground` option to get logs.
+
+  ```bash
+  vbmcd --foreground
+  ```
 
 ### Configure VirtualBMC
 
 * In order to see all command options supported by the `vbmc` tool do:
+
   ```bash
-  $ vbmc --help
+  vbmc --help
   ```
+
   It’s also possible to list the options from a specific command. For example, in order to know what can be provided as part of the `add` command do:
+
   ```bash
-  $ vbmc add --help
+  vbmc add --help
   ```
+
 * Adding a new virtual BMC to control VM called lab-vesxi01:
+
   ```bash
-  $ vbmc add lab-vesxi01 --port 6230 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
+  vbmc add lab-vesxi01 --port 6230 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
   ```
+
   * Binding a network port number below 1025 is restricted and only users with privilege will be able to start a virtual BMC on those ports.
   * Passing the credential for your vCenter Server is required.
   * By default, IPMI credential is confugired as `admin` and `password`. You can specify your own username and password by `--username` and `--password` at this time.
+
 * Adding a additional virtual BMC to control VM called lab-vesxi02:
+
   ```bash
-  $ vbmc add lab-vesxi02 --port 6231 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
+  vbmc add lab-vesxi02 --port 6231 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
   ```
+
   * Specify a different port for each virtual machine.
 * Starting the virtual BMC to control VMs:
+
   ```bash
-  $ vbmc start lab-vesxi01
-  $ vbmc start lab-vesxi02
+  vbmc start lab-vesxi01
+  vbmc start lab-vesxi02
   ```
+
 * Getting the list of virtual BMCs including their VM name and IPMI network endpoints they are reachable at:
+
   ```bash
   $ vbmc list
   +-------------+---------+---------+------+
@@ -128,7 +133,10 @@ pip install vbmc4vsphere
   | lab-vesxi01 | running | ::      | 6230 |
   | lab-vesxi02 | running | ::      | 6231 |
   +-------------+---------+---------+------+
+  ```
+
 * To view configuration information for a specific virtual BMC:
+
   ```bash
   $ vbmc show lab-vesxi01
   +-------------------+--------------------+
@@ -146,12 +154,13 @@ pip install vbmc4vsphere
   | vm_name           | lab-vesxi01        |
   +-------------------+--------------------+
   ```
-* Stopping the virtual BMC:
-  ```bash
-  $ vbmc stop lab-vesxi01
-  $ vbmc stop lab-vesxi02
-  ```
 
+* Stopping the virtual BMC:
+
+  ```bash
+  vbmc stop lab-vesxi01
+  vbmc stop lab-vesxi02
+  ```
 
 ### Server Simulation
 
@@ -165,29 +174,34 @@ In this example, if your VirtualBMC host has `192.168.0.100`, you can control:
 by using IPMI. For example:
 
 * To power on the virtual machine `lab-vesxi01`:
+
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power on
   Chassis Power Control: Up/On
   ```
+
 * To check its power status:
+
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power status
   Chassis Power is on
   ```
+
 * To shutdown `lab-vesxi01`:
+
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6230 -U admin -P password chassis power soft
   Chassis Power Control: Soft
   ```
+
 * To reset the `lab-vesxi02`:
+
   ```bash
   $ ipmitool -I lanplus -H 192.168.0.100 -p 6231 -U admin -P password chassis power reset
   Chassis Power Control: Reset
   ```
 
-
 ## Tips
-
 
 ### Optional configuration file
 
@@ -220,7 +234,6 @@ debug = true
 session_timeout = 10
 ```
 
-
 ### Manage stored data manually
 
 Once you invoke `vbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vbmc/` by default. This path can be changed by `config_dir` in your `virtialbmc.conf` described above.
@@ -241,10 +254,9 @@ viserver_password = my-secure-password
 active = True
 ```
 
-
 ### Use with Nested-ESXi and vCenter Server
 
-In the vCenter Server, by using VirtualBMC for vSphere (`0.0.3` or later), **you can enable the vSphere DPM: Distributed Power Management feature** for Nested-ESXi host that is running in your VMware vSphere environment. 
+In the vCenter Server, by using VirtualBMC for vSphere (`0.0.3` or later), **you can enable the vSphere DPM: Distributed Power Management feature** for Nested-ESXi host that is running in your VMware vSphere environment.
 
 So you can achieve:
 
@@ -253,13 +265,11 @@ So you can achieve:
 
 See 📖[the guide on GitHub Wiki page to use with Nested-ESXi and vCenter Server](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
 
-
 ### Use with Nested-KVM and oVirt
 
 In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Management feature for Nested-KVM that is running in your vSphere environment.
 
 See 📖[the guide on GitHub Wiki page to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
-
 
 ### Use with OpenShift Baremetal IPI
 
@@ -271,10 +281,9 @@ Here's how to automatically provision OpenShift to a physical server, called Bar
 
 See 📖[the guide to GitHub Wiki page to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
-
 ## Reference resources
 
-This project is started based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce) and customized to support the VMware vSphere environment instead of the OpenStack. 
+This project is started based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce) and customized to support the VMware vSphere environment instead of the OpenStack.
 
-* Original VirtualBMC documentation (for OpenStack): https://docs.openstack.org/virtualbmc/latest
-* Its source: https://opendev.org/openstack/virtualbmc
+* Original VirtualBMC documentation (for OpenStack): <https://docs.openstack.org/virtualbmc/latest>
+* Its source: <https://opendev.org/openstack/virtualbmc>
