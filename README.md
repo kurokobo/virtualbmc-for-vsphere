@@ -32,6 +32,17 @@ pip install vbmc4vsphere
 
 If you want to run VirtualBMC for vSphere in Docker container, [see the guide on wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Containerized-VirtualBMC-for-vSphere).
 
+### vSphere Permissions
+
+The following are the minimum permissions needed on vSphere for vbmc4vsphere (queried using [`govc`](https://github.com/vmware/govmomi/tree/master/govc)).
+
+```
+VirtualMachine.Config.Settings
+VirtualMachine.Interact.PowerOff
+VirtualMachine.Interact.PowerOn
+VirtualMachine.Interact.Reset
+```
+
 ### Supported IPMI commands
 
 ```bash
