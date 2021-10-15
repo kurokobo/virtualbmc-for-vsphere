@@ -41,7 +41,7 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|sof
 # Check the power status
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power status
 
-# Set the boot device to network, dick or cdrom
+# Set the boot device to network, disk or cdrom
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 chassis bootdev pxe|disk|cdrom
 
 # Get the current boot device
