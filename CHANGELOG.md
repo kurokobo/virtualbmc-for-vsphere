@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
+### Breaking Changes
 
-- N/A
+- Rename commands to `vsbmc` and `vsbmcd` to allow coexistence with the original VirtualBMC
 
 ## [0.0.8] - 2021-09-15
 
