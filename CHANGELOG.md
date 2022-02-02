@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- N/A
+
+## [0.1.0] - 2022-02-02
+
 ### Breaking Changes
 
-- Rename commands to `vsbmc` and `vsbmcd` to allow coexistence with the original VirtualBMC
+- Rename commands to `vsbmc` and `vsbmcd` to allow coexistence with the original VirtualBMC (#9)
+
+### Fixed
+
+- Make the container image to run as non-root user (#11)
 
 ## [0.0.8] - 2021-09-15
 
@@ -71,7 +81,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add VMware vSphere support with few IPMI commands and remove OpenStack support
 - Project starts based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce)
 
-[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.8...HEAD
+[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.8...0.1.0
 [0.0.8]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.7...0.0.8
 [0.0.7]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.6...0.0.7
 [0.0.6]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.5...0.0.6
