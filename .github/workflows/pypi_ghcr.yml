@@ -1,4 +1,4 @@
-name: Publish packages to TestPyPI, PyPI, and GitHub Container Registry
+name: TestPyPI, PyPI, and GitHub Container Registry
 
 on: push
 
