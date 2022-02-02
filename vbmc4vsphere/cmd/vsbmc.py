@@ -87,7 +87,7 @@ class ZmqClient(object):
 
             except zmq.ZMQError as ex:
                 msg = (
-                    "Failed to connect to the vbmcd server on port "
+                    "Failed to connect to the vsbmcd server on port "
                     "%(port)s, error: %(error)s" % {"port": server_port, "error": ex}
                 )
                 LOG.error(msg)
@@ -303,7 +303,9 @@ class VirtualBMCApp(App):
         )
 
         parser.add_argument(
-            "--no-daemon", action="store_true", help="Do not start vbmcd automatically"
+            "--no-daemon",
+            action="store_true",
+            help="Do not start vsbmcd automatically",
         )
 
         return parser

@@ -192,7 +192,7 @@ def command_dispatcher(vbmc_manager, data_in):
 
 
 def application():
-    """vbmcd application entry point
+    """vsbmcd application entry point
 
     Initializes, serves and cleans up everything.
     """

@@ -18,9 +18,9 @@ from vbmc4vsphere import utils
 __all__ = ["get_config"]
 
 _CONFIG_FILE_PATHS = (
-    os.environ.get("VIRTUALBMC_CONFIG", ""),
-    os.path.join(os.path.expanduser("~"), ".vbmc", "virtualbmc.conf"),
-    "/etc/virtualbmc/virtualbmc.conf",
+    os.environ.get("VBMC4VSPHERE_CONFIG", ""),
+    os.path.join(os.path.expanduser("~"), ".vsbmc", "vbmc4vsphere.conf"),
+    "/etc/vbmc4vsphere/vbmc4vsphere.conf",
 )
 
 CONFIG_FILE = next((x for x in _CONFIG_FILE_PATHS if os.path.exists(x)), "")
@@ -33,8 +33,8 @@ class VirtualBMCConfig(object):
     DEFAULTS = {
         "default": {
             "show_passwords": "false",
-            "config_dir": os.path.join(os.path.expanduser("~"), ".vbmc"),
-            "pid_file": os.path.join(os.path.expanduser("~"), ".vbmc", "master.pid"),
+            "config_dir": os.path.join(os.path.expanduser("~"), ".vsbmc"),
+            "pid_file": os.path.join(os.path.expanduser("~"), ".vsbmc", "master.pid"),
             "server_port": 50891,
             "server_response_timeout": 5000,  # milliseconds
             "server_spawn_wait": 3000,  # milliseconds

@@ -3,9 +3,15 @@
 
 [![Downloads](https://pepy.tech/badge/vbmc4vsphere)](https://pepy.tech/project/vbmc4vsphere)
 
+⚠️ ***IMPORTANT UPDATES*** ⚠️
+
+***Since `0.1.0`, the commands have been renamed to `vsbmc` and `vsbmcd` to allow coexistence with the original VirtualBMC. Also, the path to the configuration files has been changed.***
+
+***To migrate your old configuration files, please refer to [the migration guide on the GitHub Wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Migrate-configuration-files-from-0.0.8-or-earlier-to-0.1.0-or-later).***
+
+<!-- omit in toc -->
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Disclaimer](#disclaimer)
   - [Installation](#installation)
@@ -50,7 +56,7 @@ See:
 ### Installation
 
 ```bash
-pip install vbmc4vsphere
+python -m pip install vbmc4vsphere
 ```
 
 If you want to run VirtualBMC for vSphere in Docker container, [see the guide on wiki page](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Containerized-VirtualBMC-for-vSphere).
@@ -98,12 +104,12 @@ ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 lan print 1
 
 ## Quick Start
 
-Install VirtualBMC for vSphere on some linux host, start `vbmcd` daemon, and then configure through `vbmc` command.
+Install VirtualBMC for vSphere on some linux host, start `vsbmcd` daemon, and then configure through `vsbmc` command.
 
 ### Installation
 
 ```bash
-pip install vbmc4vsphere
+python -m pip install vbmc4vsphere
 ```
 
 ### Start Daemon
@@ -111,33 +117,33 @@ pip install vbmc4vsphere
 - Start daemon:
 
   ```bash
-  vbmcd
+  vsbmcd
   ```
 
   By default, daemon starts in background. You can start it in foreground by `--foreground` option to get logs.
 
   ```bash
-  vbmcd --foreground
+  vsbmcd --foreground
   ```
 
 ### Configure VirtualBMC
 
-- In order to see all command options supported by the `vbmc` tool do:
+- In order to see all command options supported by the `vsbmc` tool do:
 
   ```bash
-  vbmc --help
+  vsbmc --help
   ```
 
   It’s also possible to list the options from a specific command. For example, in order to know what can be provided as part of the `add` command do:
 
   ```bash
-  vbmc add --help
+  vsbmc add --help
   ```
 
 - Adding a new virtual BMC to control VM called lab-vesxi01:
 
   ```bash
-  vbmc add lab-vesxi01 --port 6230 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
+  vsbmc add lab-vesxi01 --port 6230 --viserver 192.168.0.1 --viserver-username vsbmc@vsphere.local --viserver-password my-secure-password
   ```
 
   - Binding a network port number below 1025 is restricted and only users with privilege will be able to start a virtual BMC on those ports.
@@ -147,21 +153,21 @@ pip install vbmc4vsphere
 - Adding a additional virtual BMC to control VM called lab-vesxi02:
 
   ```bash
-  vbmc add lab-vesxi02 --port 6231 --viserver 192.168.0.1 --viserver-username vbmc@vsphere.local --viserver-password my-secure-password
+  vsbmc add lab-vesxi02 --port 6231 --viserver 192.168.0.1 --viserver-username vsbmc@vsphere.local --viserver-password my-secure-password
   ```
 
   - Specify a different port for each virtual machine.
 - Starting the virtual BMC to control VMs:
 
   ```bash
-  vbmc start lab-vesxi01
-  vbmc start lab-vesxi02
+  vsbmc start lab-vesxi01
+  vsbmc start lab-vesxi02
   ```
 
 - Getting the list of virtual BMCs including their VM name and IPMI network endpoints they are reachable at:
 
   ```bash
-  $ vbmc list
+  $ vsbmc list
   +-------------+---------+---------+------+
   | VM name     | Status  | Address | Port |
   +-------------+---------+---------+------+
@@ -173,28 +179,28 @@ pip install vbmc4vsphere
 - To view configuration information for a specific virtual BMC:
 
   ```bash
-  $ vbmc show lab-vesxi01
-  +-------------------+--------------------+
-  | Property          | Value              |
-  +-------------------+--------------------+
-  | active            | False              |
-  | address           | ::                 |
-  | password          | ***                |
-  | port              | 6230               |
-  | status            | running            |
-  | username          | admin              |
-  | viserver          | 192.168.0.1        |
-  | viserver_password | ***                |
-  | viserver_username | vbmc@vsphere.local |
-  | vm_name           | lab-vesxi01        |
-  +-------------------+--------------------+
+  $ vsbmc show lab-vesxi01
+  +-------------------+---------------------+
+  | Property          | Value               |
+  +-------------------+---------------------+
+  | active            | False               |
+  | address           | ::                  |
+  | password          | ***                 |
+  | port              | 6230                |
+  | status            | running             |
+  | username          | admin               |
+  | viserver          | 192.168.0.1         |
+  | viserver_password | ***                 |
+  | viserver_username | vsbmc@vsphere.local |
+  | vm_name           | lab-vesxi01         |
+  +-------------------+---------------------+
   ```
 
 - Stopping the virtual BMC:
 
   ```bash
-  vbmc stop lab-vesxi01
-  vbmc stop lab-vesxi02
+  vsbmc stop lab-vesxi01
+  vsbmc stop lab-vesxi02
   ```
 
 ### Server Simulation
@@ -240,29 +246,29 @@ by using IPMI. For example:
 
 ### Optional configuration file
 
-Both `vbmcd` and `vbmc` can make use of an optional configuration file, which is looked for in the following locations (in this order):
+Both `vsbmcd` and `vsbmc` can make use of an optional configuration file, which is looked for in the following locations (in this order):
 
-- `VIRTUALBMC_CONFIG` environment variable pointing to a file
-- `$HOME/.vbmc/virtualbmc.conf` file
-- `/etc/virtualbmc/virtualbmc.conf` file
+- `VBMC4VSPHERE_CONFIG` environment variable pointing to a file
+- `$HOME/.vsbmc/vbmc4vsphere.conf` file
+- `/etc/vbmc4vsphere/vbmc4vsphere.conf` file
 
 If no configuration file has been found, the internal defaults apply.
 
 The configuration files are not created automatically unless you create them manually. And even if you don't create a configuration file, it won't matter in most cases.
 
-Below is a sample of `virtialbmc.conf`.
+Below is a sample of `vbmc4vsphere.conf`.
 
 ```bash
 [default]
 #show_passwords = false
-config_dir = /home/vbmc/.vbmc
-#pid_file = /home/vbmc/.vbmc/master.pid
+config_dir = /home/vsbmc/.vsbmc
+#pid_file = /home/vsbmc/.vsbmc/master.pid
 #server_port = 50891
 #server_response_timeout = 5000
 #server_spawn_wait = 3000
 
 [log]
-# logfile = /home/vbmc/.vbmc/log/vbmc.log
+# logfile = /home/vsbmc/.vsbmc/log/vbmc4vsphere.log
 debug = true 
 
 [ipmi]
@@ -271,12 +277,12 @@ session_timeout = 10
 
 ### Manage stored data manually
 
-Once you invoke `vbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vbmc/` by default. This path can be changed by `config_dir` in your `virtialbmc.conf` described above.
+Once you invoke `vsbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vsbmc/` by default. This path can be changed by `config_dir` in your `vbmc4vsphere.conf` described above.
 
 Please note everything including password stored in plain text in the `config` file.
 
 ```bash
-$ cat ~/.vbmc/lab-vesxi01/config
+$ cat ~/.vsbmc/lab-vesxi01/config
 [VirtualBMC]
 username = admin
 password = password
@@ -284,7 +290,7 @@ address = ::
 port = 6230
 vm_name = lab-vesxi01
 viserver = 192.168.0.1
-viserver_username = vbmc@vsphere.local
+viserver_username = vsbmc@vsphere.local
 viserver_password = my-secure-password
 active = True
 ```
