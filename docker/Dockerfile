@@ -1,14 +1,14 @@
-FROM python:3.9.2-slim
-
-RUN pip3 install vbmc4vsphere
+FROM python:3.9.10-slim
+ARG UID=1000
 
 WORKDIR /vsbmc
+RUN useradd -d /vsbmc -u ${UID} vsbmc && \
+    chown -R vsbmc:root /vsbmc && \
+    chmod -R 770 /vsbmc
 
-RUN chown 1001:0 . && \
-    chmod 770 .
+RUN python -m pip install vbmc4vsphere
 
-USER 1001
+USER vsbmc
 
-ENTRYPOINT ["vbmcd"]
+ENTRYPOINT ["vsbmcd"]
 CMD ["--foreground"]
-
