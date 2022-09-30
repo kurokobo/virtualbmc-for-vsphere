@@ -45,6 +45,7 @@ class VirtualBMCManager(object):
         "port",
         "fakemac",
         "vm_name",
+        "vm_uuid",
         "viserver",
         "viserver_username",
         "viserver_password",

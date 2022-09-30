@@ -65,6 +65,20 @@ def get_obj_by_name(conn, root, vim_type, value):
     return objs
 
 
+def get_viserver_vm_by_uuid(conn, uuid):
+    try:
+        search_index = conn.content.searchIndex
+        vm = search_index.FindByUuid(None, uuid, True)
+
+        if vm:
+            return vm
+        else:
+            raise Exception
+
+    except Exception:
+        raise exception.VMNotFoundByUUID(uuid=uuid)
+
+
 def get_viserver_vm(conn, vm):
     try:
         vms = get_obj_by_name(conn, conn.content.rootFolder, [vim.VirtualMachine], vm)
