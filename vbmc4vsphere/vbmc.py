@@ -53,6 +53,13 @@ SET_BOOT_DEVICES_MAP = {
     "floppy": "floppy",
 }
 
+def _get_vm_object(conn, vm_obj):
+    """Simple wrapper to chose lookup method"""
+    if vm_obj.vm_uuid:
+        LOG.debug('UUID lookup method called for vm uuid %s' % vm_obj.vm_uuid)
+        return utils.get_viserver_vm_by_uuid(conn, vm_obj.vm_uuid)
+    return utils.get_viserver_vm(conn, vm_obj.vm_name)
+
 
 def sessionless_data(self, data, sockaddr):
     """Examines unsolocited packet and decides appropriate action.
@@ -177,6 +184,7 @@ class VirtualBMC(bmc.Bmc):
         address,
         fakemac,
         vm_name,
+        vm_uuid,
         viserver,
         viserver_username=None,
         viserver_password=None,
@@ -186,6 +194,7 @@ class VirtualBMC(bmc.Bmc):
             {username: password}, port=port, address=address
         )
         self.vm_name = vm_name
+        self.vm_uuid = vm_uuid
         self.fakemac = fakemac
         self._conn_args = {
             "vi": viserver,
@@ -195,9 +204,10 @@ class VirtualBMC(bmc.Bmc):
 
     def get_boot_device(self):
         LOG.debug("Get boot device called for %(vm)s", {"vm": self.vm_name})
+
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 boot_element = vm.config.bootOptions.bootOrder
                 boot_dev = None
                 if boot_element:
@@ -228,7 +238,7 @@ class VirtualBMC(bmc.Bmc):
             return IPMI_INVALID_DATA
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 utils.set_boot_device(conn, vm, device)
         except Exception as e:
             LOG.error(
@@ -241,9 +251,10 @@ class VirtualBMC(bmc.Bmc):
 
     def get_power_state(self):
         LOG.debug("Get power state called for vm %(vm)s", {"vm": self.vm_name})
+
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 if "poweredOn" == vm.runtime.powerState:
                     return POWERON
         except Exception as e:
@@ -260,7 +271,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.debug("Power diag called for vm %(vm)s", {"vm": self.vm_name})
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 utils.send_nmi(conn, vm)
             LOG.debug(
                 "The NMI will be sent to the vm %(vm)s 60 seconds later",
@@ -278,7 +289,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.debug("Power off called for vm %(vm)s", {"vm": self.vm_name})
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 if "poweredOn" == vm.runtime.powerState:
                     vm.PowerOff()
         except Exception as e:
@@ -293,7 +304,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.debug("Power on called for vm %(vm)s", {"vm": self.vm_name})
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 if "poweredOn" != vm.runtime.powerState:
                     vm.PowerOn()
         except Exception as e:
@@ -308,7 +319,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.debug("Soft power off called for vm %(vm)s", {"vm": self.vm_name})
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 if "poweredOn" == vm.runtime.powerState:
                     vm.ShutdownGuest()
         except Exception as e:
@@ -323,7 +334,7 @@ class VirtualBMC(bmc.Bmc):
         LOG.debug("Power reset called for vm %(vm)s", {"vm": self.vm_name})
         try:
             with utils.viserver_open(**self._conn_args) as conn:
-                vm = utils.get_viserver_vm(conn, self.vm_name)
+                vm = _get_vm_object(conn, self)
                 if "poweredOn" == vm.runtime.powerState:
                     vm.Reset()
         except Exception as e:

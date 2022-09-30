@@ -193,6 +193,7 @@ python -m pip install vbmc4vsphere
   | viserver_password | ***                 |
   | viserver_username | vsbmc@vsphere.local |
   | vm_name           | lab-vesxi01         |
+  | vm_uuid           | None                |
   +-------------------+---------------------+
   ```
 
@@ -289,6 +290,23 @@ password = password
 address = ::
 port = 6230
 vm_name = lab-vesxi01
+viserver = 192.168.0.1
+viserver_username = vsbmc@vsphere.local
+viserver_password = my-secure-password
+active = True
+```
+
+To speedup VM lookup on large deployments you can specify vm uuid in the `config` file.
+
+```bash
+$ cat ~/.vsbmc/lab-vesxi01/config
+[VirtualBMC]
+username = admin
+password = password
+address = ::
+port = 6230
+vm_name = lab-vesxi01
+vm_uuid = 903a0dfb-68d1-4d2e-9674-10e353a733ca
 viserver = 192.168.0.1
 viserver_username = vsbmc@vsphere.local
 viserver_password = my-secure-password

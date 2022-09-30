@@ -31,6 +31,10 @@ class VMNotFound(VirtualBMCError):
     message = "No VN with matching name %(vm)s was found"
 
 
+class VMNotFoundByUUID(VirtualBMCError):
+    message = "No VN with matching UUID %(uuid)s was found"
+
+
 class VIServerConnectionOpenError(VirtualBMCError):
     message = (
         'Fail to establish a connection with VI Server "%(vi)s". ' "Error: %(error)s"
