@@ -26,9 +26,10 @@
 - [Tips](#tips)
   - [Optional configuration file](#optional-configuration-file)
   - [Manage stored data manually](#manage-stored-data-manually)
+  - [Use in large-scale vSphere deployments](#use-in-large-scale-vsphere-deployments)
   - [Use with Nested-ESXi and vCenter Server](#use-with-nested-esxi-and-vcenter-server)
   - [Use with Nested-KVM and oVirt](#use-with-nested-kvm-and-ovirt)
-  - [Use with OpenShift Baremetal IPI](#use-with-openshift-baremetal-ipi)
+  - [Use with OpenShift Bare Metal IPI](#use-with-openshift-bare-metal-ipi)
 - [Reference resources](#reference-resources)
 
 ## Overview
@@ -45,7 +46,7 @@ See:
 
 - 📖[The guide to use with Nested-ESXi and vCenter Server](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-ESXi-and-vCenter-Server).
 - 📖[The guide to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
-- 📖[The guide to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
+- 📖[The guide to use with OpenShift Bare Metal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
 ### Disclaimer
 
@@ -63,7 +64,7 @@ If you want to run VirtualBMC for vSphere in Docker container, [see the guide on
 
 ### vSphere Permissions
 
-The following are the minimum permissions needed on vSphere for VirtualBMC for vSphere (queried using [`govc`](https://github.com/vmware/govmomi/tree/master/govc)).
+The following are the minimum permissions needed on vSphere for VirtualBMC for vSphere (queried using [govc](https://github.com/vmware/govmomi/tree/master/govc)).
 
 ```text
 VirtualMachine.Config.Settings
@@ -76,16 +77,17 @@ Global.Diagnostics
 ### Supported IPMI commands
 
 ```bash
-# Power the virtual machine on, off, graceful off, reset, and NMI. Note that NMI is currently experimental
+# Power the virtual machine on, off, graceful off, reset, and NMI.
+# Note that NMI is currently experimental.
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power on|off|soft|reset|diag
 
-# Check the power status
+# Check the power status.
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 power status
 
-# Set the boot device to network, disk or cdrom
+# Set the boot device to network, disk or cdrom.
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 chassis bootdev pxe|disk|cdrom
 
-# Get the current boot device
+# Get the current boot device.
 ipmitool -I lanplus -U admin -P password -H 192.168.0.1 -p 6230 chassis bootparam get 5
 
 # Get the channel info. Note that its output is always a dummy, not actual information.
@@ -148,7 +150,7 @@ python -m pip install vbmc4vsphere
 
   - Binding a network port number below 1025 is restricted and only users with privilege will be able to start a virtual BMC on those ports.
   - Passing the credential for your vCenter Server is required.
-  - By default, IPMI credential is confugired as `admin` and `password`. You can specify your own username and password by `--username` and `--password` at this time.
+  - By default, IPMI credential is configured as `admin` and `password`. You can specify your own username and password by `--username` and `--password` at this time.
 
 - Adding a additional virtual BMC to control VM called lab-vesxi02:
 
@@ -210,8 +212,8 @@ Once the virtual BMC for a specific VM has been created and started you can then
 
 In this example, if your VirtualBMC host has `192.168.0.100`, you can control:
 
-- `lab-vesxi01` througth `192.168.0.100:6230`
-- `lab-vesxi02` througth `192.168.0.100:6231`
+- `lab-vesxi01` through `192.168.0.100:6230`
+- `lab-vesxi02` through `192.168.0.100:6231`
 
 by using IPMI. For example:
 
@@ -278,25 +280,9 @@ session_timeout = 10
 
 ### Manage stored data manually
 
-Once you invoke `vsbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vsbmc/` by default. This path can be changed by `config_dir` in your `vbmc4vsphere.conf` described above.
+Once you invoke `vsbmc add` command, everything that you specified will be stored as `config` file per virtual machine under `$HOME/.vsbmc/` by default. There files can be used backup/restoration, migration, and of course can be managed by any kind of configuration management tools. Please note **everything including password stored in plain text** in these `config` file.
 
-Please note everything including password stored in plain text in the `config` file.
-
-```bash
-$ cat ~/.vsbmc/lab-vesxi01/config
-[VirtualBMC]
-username = admin
-password = password
-address = ::
-port = 6230
-vm_name = lab-vesxi01
-viserver = 192.168.0.1
-viserver_username = vsbmc@vsphere.local
-viserver_password = my-secure-password
-active = True
-```
-
-To speedup VM lookup on large deployments you can specify vm uuid in the `config` file.
+The path for these files can be changed by `config_dir` in your `vbmc4vsphere.conf` described above.
 
 ```bash
 $ cat ~/.vsbmc/lab-vesxi01/config
@@ -311,6 +297,36 @@ viserver = 192.168.0.1
 viserver_username = vsbmc@vsphere.local
 viserver_password = my-secure-password
 active = True
+```
+
+### Use in large-scale vSphere deployments
+
+You can use UUID instead of name to identify virtual machine by specifying `--vm-uuid` option in `vsbmc add` command. This makes response time for IPMI command faster in large-scale vSphere deployments with a large number of virtual machines.
+
+```bash
+vsbmc add lab-vesxi01 \
+  --vm-uuid 903a0dfb-68d1-4d2e-9674-10e353a733ca \
+  --port 6230 \
+  --viserver 192.168.0.1 \
+  --viserver-username vsbmc@vsphere.local \
+  --viserver-password my-secure-password
+```
+
+The UUID for virtual machines can be gathered in various ways like [govc](https://github.com/vmware/govmomi/tree/master/govc) and [PowerCLI](https://developer.vmware.com/powercli).
+
+```bash
+# Get UUID by govc
+$ govc vm.info lab-vesxi01
+Name:           lab-vesxi01
+  ...
+  UUID:         903a0dfb-68d1-4d2e-9674-10e353a733ca
+  ...
+```
+
+```powershell
+# Get UUID by PowerCLI
+> (Get-VM lab-vesxi01).ExtensionData.Config.Uuid
+903a0dfb-68d1-4d2e-9674-10e353a733ca
 ```
 
 ### Use with Nested-ESXi and vCenter Server
@@ -330,15 +346,15 @@ In the oVirt, by using VirtualBMC for vSphere, you can enable the Power Manageme
 
 See 📖[the guide on GitHub Wiki page to use with Nested-KVM and oVirt](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Use-with-Nested-KVM-and-oVirt).
 
-### Use with OpenShift Baremetal IPI
+### Use with OpenShift Bare Metal IPI
 
 With VirtualBMC for vSphere, you can control your virtual machines in the same way as a physical server. This means that tasks that require a physical BMC can be done in a virtual environment.
 
 One such example is the provisioning of a physical server.
 
-Here's how to automatically provision OpenShift to a physical server, called Baremetal IPI, using a virtual machine in vSphere environment with VirtualBMC for vSphere.
+Here's how to automatically provision OpenShift to a physical server, called Bare Metal IPI, using a virtual machine in vSphere environment with VirtualBMC for vSphere.
 
-See 📖[the guide to GitHub Wiki page to use with OpenShift Baremetal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
+See 📖[the guide to GitHub Wiki page to use with OpenShift Bare Metal IPI](https://github.com/kurokobo/virtualbmc-for-vsphere/wiki/Install-OpenShift-in-vSphere-environment-using-the-Baremetal-IPI-procedure).
 
 ## Reference resources
 
