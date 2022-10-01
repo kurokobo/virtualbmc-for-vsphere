@@ -195,13 +195,6 @@ def send_nmi(conn, vm):
     ).start()
 
 
-def check_viserver_connection_and_vm(vi, vm, vi_username=None, vi_password=None):
-    with viserver_open(
-        vi, readonly=True, vi_username=vi_username, vi_password=vi_password
-    ) as conn:
-        get_viserver_vm(conn, vm)
-
-
 def is_pid_running(pid):
     try:
         os.kill(pid, 0)

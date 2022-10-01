@@ -126,6 +126,16 @@ class AddCommand(Command):
 
         parser.add_argument("vm_name", help="The name of the virtual machine")
         parser.add_argument(
+            "--vm-uuid",
+            dest="vm_uuid",
+            default=None,
+            help=(
+                "The UUID of the virtual machine. "
+                "If this specified, UUID is used instead of name "
+                "to identify virtual machine; defaults to None"
+            ),
+        )
+        parser.add_argument(
             "--username",
             dest="username",
             default="admin",
@@ -150,7 +160,7 @@ class AddCommand(Command):
             default="::",
             help=(
                 "The address to bind to (IPv4 and IPv6 "
-                "are supported); defaults to ::"
+                'are supported); defaults to "::"'
             ),
         )
         parser.add_argument(
@@ -168,19 +178,19 @@ class AddCommand(Command):
             "--viserver",
             dest="viserver",
             default=None,
-            help=("The VI Server; defaults to " "None"),
+            help="The VI Server; defaults to None",
         )
         parser.add_argument(
             "--viserver-username",
             dest="viserver_username",
             default=None,
-            help=("The VI Server username; defaults to " "None"),
+            help="The VI Server username; defaults to None",
         )
         parser.add_argument(
             "--viserver-password",
             dest="viserver_password",
             default=None,
-            help=("The VI Server password; defaults to " "None"),
+            help="The VI Server password; defaults to None",
         )
         return parser
 

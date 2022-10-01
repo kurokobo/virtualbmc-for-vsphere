@@ -243,17 +243,12 @@ class VirtualBMCManager(object):
         address,
         fakemac,
         vm_name,
+        vm_uuid,
         viserver,
         viserver_username,
         viserver_password,
         **kwargs
     ):
-
-        # check VI Serevr's connection and if vm exist prior to adding it
-        # utils.check_viserver_connection_and_vm(
-        #     viserver, vm_name,
-        #     vi_username=viserver_username,
-        #     vi_password=viserver_password)
 
         vm_path = os.path.join(self.config_dir, vm_name)
 
@@ -276,6 +271,7 @@ class VirtualBMCManager(object):
         try:
             self._store_config(
                 vm_name=vm_name,
+                vm_uuid=vm_uuid,
                 username=username,
                 password=password,
                 port=str(port),
