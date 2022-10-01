@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - N/A
 
+## [0.3.0] - 2022-10-01
+
+### Added
+
+- Add `--vm-uuid` option to `vsbmc add` command to specify UUID for virtual machine without modifying config file (#17)
+
 ## [0.2.0] - 2022-10-01
 
 ### Added
@@ -91,7 +97,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add VMware vSphere support with few IPMI commands and remove OpenStack support
 - Project starts based on the copy of [VirtualBMC 2.1.0.dev](https://github.com/openstack/virtualbmc/commit/c4c8edb66bc49fcb1b8fb41af77546e06d2e8bce)
 
-[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.8...0.1.0
 [0.0.8]: https://github.com/kurokobo/virtualbmc-for-vsphere/compare/0.0.7...0.0.8
