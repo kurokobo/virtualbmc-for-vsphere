@@ -53,6 +53,7 @@ SET_BOOT_DEVICES_MAP = {
     "floppy": "floppy",
 }
 
+
 def _get_vm_object(conn, vm_obj):
     """Simple wrapper to chose lookup method"""
     if vm_obj.vm_uuid:
